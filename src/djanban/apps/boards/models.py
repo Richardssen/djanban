@@ -180,8 +180,7 @@ class Board(models.Model):
 
     @property
     def start_datetime(self):
-        first_card_creation_datetime = self.cards.all().aggregate(min=Min("creation_datetime"))["min"]
-        return first_card_creation_datetime
+        return self.cards.all().aggregate(min=Min("creation_datetime"))["min"]
 
     @property
     def end_datetime(self):
@@ -207,14 +206,18 @@ class Board(models.Model):
         if hourly_rates.count() == 0:
             return None
 
-        for hourly_rate in hourly_rates:
-            # If date is inside the interval defined by the dates of the hourly rate
-            # this hourly rate will be applied in this day
-            if (hourly_rate.end_date and hourly_rate.start_date <= date <= hourly_rate.end_date) or\
-                     date >= hourly_rate.start_date:
-                return hourly_rate
-
-        return None
+        return next(
+            (
+                hourly_rate
+                for hourly_rate in hourly_rates
+                if (
+                    hourly_rate.end_date
+                    and hourly_rate.start_date <= date <= hourly_rate.end_date
+                )
+                or date >= hourly_rate.start_date
+            ),
+            None,
+        )
 
     # Is the board in downtime?
     @property
@@ -288,7 +291,7 @@ class Board(models.Model):
     def _get_developed_time(self, attr="spent_time", date=None, member=None, label=None):
         daily_spent_times_filter = {}
         if date:
-            if type(date) == tuple or type(date) == list:
+            if type(date) in [tuple, list]:
                 daily_spent_times_filter["date__gte"] = date[0]
                 daily_spent_times_filter["date__lte"] = date[1]
             else:
@@ -368,8 +371,9 @@ class Board(models.Model):
         # Getting the spent time of that month
         end_working_month = end_working_date.month
         end_working_year = end_working_date.year
-        spent_time = self.get_monthly_spent_time(month=end_working_month, year=end_working_year)
-        return spent_time
+        return self.get_monthly_spent_time(
+            month=end_working_month, year=end_working_year
+        )
 
     # The number of hours worked in the last month with some work
     @property
@@ -424,7 +428,7 @@ class Board(models.Model):
     def get_developed_value(self, date=None, member=None):
         daily_spent_times_filter = {}
         if date:
-            if type(date) == tuple or type(date) == list:
+            if type(date) in [tuple, list]:
                 daily_spent_times_filter["date__gte"] = date[0]
                 daily_spent_times_filter["date__lte"] = date[1]
             else:
@@ -442,7 +446,7 @@ class Board(models.Model):
     def get_adjusted_developed_value(self, date=None, member=None):
         daily_spent_times_filter = {}
         if date:
-            if type(date) == tuple or type(date) == list:
+            if type(date) in [tuple, list]:
                 daily_spent_times_filter["date__gte"] = date[0]
                 daily_spent_times_filter["date__lte"] = date[1]
             else:
@@ -465,12 +469,15 @@ class Board(models.Model):
     def get_working_start_date(self):
         first_spent_time_date = self.daily_spent_times.all().aggregate(min_date=Min("date"))["min_date"]
         first_card_movement = self.card_movements.all().aggregate(min_datetime=Min("datetime"))["min_datetime"]
-        if first_spent_time_date and first_card_movement:
-            if first_spent_time_date < first_card_movement.date():
+        if first_spent_time_date:
+            if (
+                first_card_movement
+                and first_spent_time_date < first_card_movement.date()
+                or not first_card_movement
+            ):
                 return first_spent_time_date
-            return first_card_movement.date()
-        elif first_spent_time_date:
-            return first_spent_time_date
+            else:
+                return first_card_movement.date()
         if first_card_movement:
             return first_card_movement.date()
         return None
@@ -479,12 +486,15 @@ class Board(models.Model):
     def get_working_end_date(self):
         last_spent_time_date = self.daily_spent_times.all().aggregate(max_date=Max("date"))["max_date"]
         last_card_movement = self.card_movements.all().aggregate(max_datetime=Max("datetime"))["max_datetime"]
-        if last_spent_time_date and last_card_movement:
-            if last_spent_time_date > last_card_movement.date():
+        if last_spent_time_date:
+            if (
+                last_card_movement
+                and last_spent_time_date > last_card_movement.date()
+                or not last_card_movement
+            ):
                 return last_spent_time_date
-            return last_card_movement.date()
-        elif last_spent_time_date:
-            return last_spent_time_date
+            else:
+                return last_card_movement.date()
         if last_card_movement:
             return last_card_movement.date()
         return None
@@ -543,16 +553,11 @@ class Board(models.Model):
                     pass
             date_i += timedelta(days=1)
 
-        member_mood = []
-        for member in members:
-            if len(member.moods) > 0:
-                member_mood.append(numpy.mean(member.moods))
+        member_mood = [
+            numpy.mean(member.moods) for member in members if len(member.moods) > 0
+        ]
 
-        if len(member_mood) > 0:
-            self.last_mood_value = numpy.mean(member_mood)
-        else:
-            self.last_mood_value = 0
-
+        self.last_mood_value = numpy.mean(member_mood) if member_mood else 0
         self.last_time_mood_was_computed = timezone.now()
         self.save()
         return self.last_mood_value
@@ -852,9 +857,9 @@ class Card(models.Model):
 
     @property
     def start_datetime(self):
-        first_arrival_to_in_development_datetime = \
-            self.movements.filter(destination_list__type="development").aggregate(min=Min("datetime"))["min"]
-        if first_arrival_to_in_development_datetime:
+        if first_arrival_to_in_development_datetime := self.movements.filter(
+            destination_list__type="development"
+        ).aggregate(min=Min("datetime"))["min"]:
             return first_arrival_to_in_development_datetime
         return self.creation_datetime
 
@@ -1085,11 +1090,7 @@ class Card(models.Model):
         # Updating the card
         self.save()
 
-        # Preparation of the comment content with the style of Plus for Trello
-        days_ago_str = ""
-        if days_ago:
-            days_ago_str = "-{0}d ".format(days_ago)
-
+        days_ago_str = "-{0}d ".format(days_ago) if days_ago else ""
         # Creation of comment with the daily spent time
         comment_content = Card.COMMENT_SPENT_ESTIMATED_TIME_PATTERN.format(
             days_ago=days_ago_str, spent_time=spent_time, estimated_time=estimated_time, description=description
@@ -1157,18 +1158,17 @@ class Card(models.Model):
 
         if value is not None:
             comment_content = Card.COMMENT_VALUATED_CARD_PATTERN.format(value=value)
-            if valuation_comment is not None:
+            if valuation_comment is None:
+                # Creation of comment with the valuation of this card
+                self.valuation_comment = self.add_comment(member, comment_content)
+            else:
                 # Edition of comment with the valuation of this card
                 self.edit_comment(member, comment=valuation_comment, new_content=comment_content)
                 self.value = value
-            else:
-                # Creation of comment with the valuation of this card
-                self.valuation_comment = self.add_comment(member, comment_content)
             self.save()
-        else:
-            if valuation_comment is not None:
-                self.delete_comment(member, comment=valuation_comment)
-                self.save()
+        elif valuation_comment is not None:
+            self.delete_comment(member, comment=valuation_comment)
+            self.save()
 
                 # Add a new comment to this card
 
@@ -1197,10 +1197,11 @@ class Card(models.Model):
 
         # If there is already a file named uploaded_file_name, put
         if CardAttachment.objects.filter(file=uploaded_file_name).exists():
-            matches = re.match("^(?P<filename>.+)(?P<extension>\.[\w\d]+)", uploaded_file_name)
-            if matches:
-                filename = matches.group("filename")
-                extension = matches.group("extension")
+            if matches := re.match(
+                "^(?P<filename>.+)(?P<extension>\.[\w\d]+)", uploaded_file_name
+            ):
+                filename = matches["filename"]
+                extension = matches["extension"]
                 now = timezone.now()
                 uploaded_file_name = "{0}-{1}{2}".format(filename, now.isoformat(), extension)
 
@@ -1408,44 +1409,47 @@ class CardComment(models.Model):
     last_edition_datetime = models.DateTimeField(verbose_name=u"Last edition of the comment", default=None, null=True)
 
     def get_spent_estimated_time_from_content(self):
-        matches = re.match(Card.COMMENT_SPENT_ESTIMATED_TIME_REGEX, self.content, re.IGNORECASE)
-        if matches:
+        if matches := re.match(
+            Card.COMMENT_SPENT_ESTIMATED_TIME_REGEX, self.content, re.IGNORECASE
+        ):
             date = self.creation_datetime.date()
 
-            if matches.group("days_before"):
-                date -= timedelta(days=int(matches.group("days_before")))
+            if matches["days_before"]:
+                date -= timedelta(days=int(matches["days_before"]))
 
-            if matches.group("description") and matches.group("description").strip():
-                description = matches.group("description")
+            if matches["description"] and matches["description"].strip():
+                description = matches["description"]
             else:
                 description = self.card.name
 
             return {
-                "date":  date,
-                "spent_time": float(matches.group("spent")),
-                "estimated_time": float(matches.group("estimated")),
-                "description": description
+                "date": date,
+                "spent_time": float(matches["spent"]),
+                "estimated_time": float(matches["estimated"]),
+                "description": description,
             }
+
         return None
 
     # Returns the blocking card linked to this comment extracted from its content.
     # If it is not a blocking card comment, return None
     @property
     def blocking_card_from_content(self):
-        matches = re.match(Card.COMMENT_BLOCKED_CARD_REGEX, self.content, re.IGNORECASE)
-        if matches:
-            blocking_card_url = matches.group("card_url")
-            blocking_card = self.card.board.cards.get(url=blocking_card_url)
-            return blocking_card
+        if matches := re.match(
+            Card.COMMENT_BLOCKED_CARD_REGEX, self.content, re.IGNORECASE
+        ):
+            blocking_card_url = matches["card_url"]
+            return self.card.board.cards.get(url=blocking_card_url)
         return None
 
     # Return the requirement linked to this comment extracted from its content.
     # If it is not a requirement card comment, return None.
     @property
     def requirement_from_content(self):
-        matches = re.match(Card.COMMENT_REQUIREMENT_CARD_REGEX, self.content, re.IGNORECASE)
-        if matches:
-            requirement_code = matches.group("requirement_code")
+        if matches := re.match(
+            Card.COMMENT_REQUIREMENT_CARD_REGEX, self.content, re.IGNORECASE
+        ):
+            requirement_code = matches["requirement_code"]
             try:
                 return self.card.board.requirements.get(code=requirement_code)
             # If the requirement does not exist, you should be more careful when writing comments
@@ -1458,35 +1462,46 @@ class CardComment(models.Model):
     # If it is not a reviewer card comment, return None.
     @property
     def review_from_comment(self):
-        matches = re.match(Card.COMMENT_REVIEWED_BY_MEMBERS_REGEX, self.content, re.IGNORECASE)
-        if matches:
+        if not (
+            matches := re.match(
+                Card.COMMENT_REVIEWED_BY_MEMBERS_REGEX, self.content, re.IGNORECASE
+            )
+        ):
+            return None
             # Extracting member usernames
-            member_usernames_string = matches.group("member_usernames")
-            member_usernames = re.findall(Card.COMMENT_REVIEWED_BY_MEMBERS_FINDALL_REGEX, member_usernames_string)
-            if len(member_usernames) == 1 and member_usernames[0] == "@board":
-                members = self.card.board.members.all()
-            else:
-                cleaned_member_usernames = [member_username.replace("@", "") for member_username in member_usernames]
-                members = [member for member in self.card.board.members.filter(trello_member_profile__username__in=cleaned_member_usernames)]
+        member_usernames_string = matches["member_usernames"]
+        member_usernames = re.findall(Card.COMMENT_REVIEWED_BY_MEMBERS_FINDALL_REGEX, member_usernames_string)
+        if len(member_usernames) == 1 and member_usernames[0] == "@board":
+            members = self.card.board.members.all()
+        else:
+            cleaned_member_usernames = [member_username.replace("@", "") for member_username in member_usernames]
+            members = list(
+                self.card.board.members.filter(
+                    trello_member_profile__username__in=cleaned_member_usernames
+                )
+            )
+
             # Checkout the description of the review
-            try:
-                description = matches.group("description")
-            except IndexError:
-                description = ""
+        try:
+            description = matches["description"]
+        except IndexError:
+            description = ""
 
-            # Construct a dict with the review info
-            _review_from_comment = {"reviewers": members, "datetime": self.creation_datetime, "card": self.card, "board": self.card.board, "description": description}
-            return _review_from_comment
-
-        return None
+        return {
+            "reviewers": members,
+            "datetime": self.creation_datetime,
+            "card": self.card,
+            "board": self.card.board,
+            "description": description,
+        }
 
     # Return the card value associated to this comment extracted from its content.
     @property
     def card_value_from_content(self):
-        matches = re.match(Card.COMMENT_VALUATED_CARD_REGEX, self.content, re.IGNORECASE)
-        if matches:
-            value = matches.group("value")
-            return value
+        if matches := re.match(
+            Card.COMMENT_VALUATED_CARD_REGEX, self.content, re.IGNORECASE
+        ):
+            return matches["value"]
         return None
 
     # Update mentioned members
@@ -1500,15 +1515,14 @@ class CardComment(models.Model):
         # If all the board is mentioned, ignore other mentions. Everyone in this board is mention
         if "board" in cleaned_member_usernames:
             mentioned_members = self.card.board.members.all()
-        # Otherwise, get the particular mentioned members
         else:
-            mentioned_members = [
-                member for member in
+            mentioned_members = list(
                 self.card.board.members.filter(
-                    Q(trello_member_profile__username__in=cleaned_member_usernames)|
-                    Q(user__username__in=cleaned_member_usernames)
+                    Q(trello_member_profile__username__in=cleaned_member_usernames)
+                    | Q(user__username__in=cleaned_member_usernames)
                 )
-            ]
+            )
+
         # Clear all old mentions
         earlier_number_of_mentioned_members = self.mentioned_members.count()
         self.mentioned_members.clear()
@@ -1527,33 +1541,24 @@ class CardComment(models.Model):
     def delete(self, *args, **kwargs):
         super(CardComment, self).delete(*args, **kwargs)
 
-        # If the comment is a spent/estimated measure it should be updated
-        spent_estimated_time = self.get_spent_estimated_time_from_content()
-        if spent_estimated_time:
+        if spent_estimated_time := self.get_spent_estimated_time_from_content():
             self.card.daily_spent_times.filter(spent_time=spent_estimated_time["spent_time"],
                                           estimated_time=spent_estimated_time["estimated_time"]).delete()
             self.card.update_spent_estimated_time()
 
-        # If the comment is a blocking card mention, and is going to be deleted, delete it
-        blocking_card = self.blocking_card_from_content
-        if blocking_card:
+        if blocking_card := self.blocking_card_from_content:
             self.card.blocking_cards.remove(blocking_card)
 
-        # If the comment is a requirement card mention, and is going to be deleted, delete it
-        requirement = self.requirement
-        if requirement:
+        if requirement := self.requirement:
             self.card.requirements.remove(requirement)
 
-        # If the comment is a review card mention, and is going to be deleted, delete it
-        review = self.review
-        if review:
+        if review := self.review:
             self.card.reviews.filter(id=review.id).delete()
 
         # If the comment is a valuation of the card, and is going to be deleted, assign
         # None the value of the card
         try:
-            valued_card = self.valued_card
-            if valued_card:
+            if valued_card := self.valued_card:
                 valued_card.value = None
                 valued_card.valuation_comment = None
                 valued_card.save()
@@ -1600,85 +1605,73 @@ class CardComment(models.Model):
     # Save an old comment
     def _save_old(self, card, earlier_card_comment):
 
-        if self.content != earlier_card_comment.content:
+        if self.content == earlier_card_comment.content:
+            return
+        # Is it a spent/estimated time comment?
+        spent_estimated_time = self.get_spent_estimated_time_from_content()
+        earlier_spent_estimated_time = earlier_card_comment.get_spent_estimated_time_from_content()
 
-            # Is it a spent/estimated time comment?
-            spent_estimated_time = self.get_spent_estimated_time_from_content()
-            earlier_spent_estimated_time = earlier_card_comment.get_spent_estimated_time_from_content()
+        if spent_estimated_time:
+            if hasattr(self, "daily_spent_time"):
+                self.daily_spent_time.set_from_comment(self)
+            else:
+                self.daily_spent_time = DailySpentTime.create_from_comment(self)
+            self.daily_spent_time.save()
+            # Update the spent and estimated time
+            card.update_spent_estimated_time()
 
-            if spent_estimated_time:
-                if hasattr(self, "daily_spent_time"):
-                    self.daily_spent_time.set_from_comment(self)
-                else:
-                    self.daily_spent_time = DailySpentTime.create_from_comment(self)
-                self.daily_spent_time.save()
-                # Update the spent and estimated time
-                card.update_spent_estimated_time()
+        # Is it a blocking card comment?
+        blocking_card = self.blocking_card_from_content
+        earlier_blocking_card = earlier_card_comment.blocking_card
+        if blocking_card != earlier_blocking_card:
+            if earlier_blocking_card is not None:
+                card.blocking_cards.remove(earlier_blocking_card)
+                self.blocking_card = None
+            if blocking_card is not None:
+                card.blocking_cards.add(blocking_card)
+                self.blocking_card = blocking_card
 
-            # Is it a blocking card comment?
-            blocking_card = self.blocking_card_from_content
-            earlier_blocking_card = earlier_card_comment.blocking_card
-            if blocking_card != earlier_blocking_card:
-                if earlier_blocking_card is not None:
-                    card.blocking_cards.remove(earlier_blocking_card)
-                    self.blocking_card = None
-                if blocking_card is not None:
-                    card.blocking_cards.add(blocking_card)
-                    self.blocking_card = blocking_card
+        # Is it a requirement card comment?
+        requirement = self.requirement_from_content
+        earlier_requirement = earlier_card_comment.requirement
+        if requirement != earlier_requirement:
+            if earlier_requirement is not None:
+                card.requirements.remove(earlier_requirement)
+                self.requirement = None
+            if requirement is not None:
+                card.requirements.add(requirement)
+                self.requirement = requirement
 
-            # Is it a requirement card comment?
-            requirement = self.requirement_from_content
-            earlier_requirement = earlier_card_comment.requirement
-            if requirement != earlier_requirement:
-                if earlier_requirement is not None:
-                    card.requirements.remove(earlier_requirement)
-                    self.requirement = None
-                if requirement is not None:
-                    card.requirements.add(requirement)
-                    self.requirement = requirement
+        if review_from_comment := self.review_from_comment:
+            review_description = review_from_comment.get("description")
+            if review_description is None:
+                review_description = ""
+            CardReview.update_or_create(self, review_from_comment["reviewers"], review_description)
 
-            # Is it a review comment?
-            review_from_comment = self.review_from_comment
-            # If there is a new review in this comment, add or update this review accordingly
-            if review_from_comment:
-                review_description = review_from_comment.get("description")
-                if review_description is None:
-                    review_description = ""
-                CardReview.update_or_create(self, review_from_comment["reviewers"], review_description)
+        elif self.review and self.card.reviews.filter(id=self.review.id).exists():
+            self.card.reviews.filter(id=self.review.id).delete()
 
-            # If there is not a review, check if there was an earlier review and in that case, delete it
-            elif self.review and self.card.reviews.filter(id=self.review.id).exists():
-                self.card.reviews.filter(id=self.review.id).delete()
-
-            # Is it a valued card comment?
-            card_value_from_comment = self.card_value_from_content
-            if card_value_from_comment is not None:
-                self.card_value = card_value_from_comment
+        # Is it a valued card comment?
+        card_value_from_comment = self.card_value_from_content
+        if card_value_from_comment is not None:
+            self.card_value = card_value_from_comment
 
     # Save a new comment
     def _save_new(self, card):
 
-        # Is it a spent/estimated time comment?
-        spent_estimated_time = self.get_spent_estimated_time_from_content()
-        if spent_estimated_time:
+        if spent_estimated_time := self.get_spent_estimated_time_from_content():
             # Creation of Daily Spent Time that depends on this comment
             self.daily_spent_time = DailySpentTime.create_from_comment(self)
 
-        # Is it a blocking card comment?
-        blocking_card = self.blocking_card_from_content
-        if blocking_card:
+        if blocking_card := self.blocking_card_from_content:
             card.blocking_cards.add(blocking_card)
             self.blocking_card = blocking_card
 
-        # Is it a requirement card comment?
-        requirement = self.requirement_from_content
-        if requirement:
+        if requirement := self.requirement_from_content:
             card.requirements.add(requirement)
             self.requirement = requirement
 
-        # Is it a reviewer card comment?
-        review_from_comment = self.review_from_comment
-        if review_from_comment:
+        if review_from_comment := self.review_from_comment:
             reviewer_members = review_from_comment.get("reviewers")
             description = review_from_comment.get("description", "")
             if description is None:
@@ -1722,21 +1715,25 @@ class Label(models.Model):
 
     def avg_estimated_time(self, **kwargs):
         label_cards = self.cards.filter(**kwargs)
-        avg_estimated_time = label_cards.aggregate(avg_estimated_time=Avg("estimated_time"))["avg_estimated_time"]
-        return avg_estimated_time
+        return label_cards.aggregate(avg_estimated_time=Avg("estimated_time"))[
+            "avg_estimated_time"
+        ]
 
     def avg_spent_time(self, **kwargs):
         label_cards = self.cards.filter(**kwargs)
-        avg_spent_time = label_cards.aggregate(avg_spent_time=Avg("spent_time"))["avg_spent_time"]
-        return avg_spent_time
+        return label_cards.aggregate(avg_spent_time=Avg("spent_time"))[
+            "avg_spent_time"
+        ]
 
     def avg_cycle_time(self, **kwargs):
-        avg_cycle_time = self.cards.filter(**kwargs).aggregate(Avg("cycle_time"))["cycle_time__avg"]
-        return avg_cycle_time
+        return self.cards.filter(**kwargs).aggregate(Avg("cycle_time"))[
+            "cycle_time__avg"
+        ]
 
     def avg_lead_time(self, **kwargs):
-        avg_lead_time = self.cards.filter(**kwargs).aggregate(Avg("lead_time"))["lead_time__avg"]
-        return avg_lead_time
+        return self.cards.filter(**kwargs).aggregate(Avg("lead_time"))[
+            "lead_time__avg"
+        ]
 
     # Returns the spent time for this label
     def get_spent_time(self, date=None, member=None):
@@ -1902,10 +1899,7 @@ class List(models.Model):
     # Average time the cards spend in this list
     @property
     def active_cards_times_in_list(self):
-        card_times_in_list = []
-        for card in self.board.active_cards:
-            card_times_in_list.append(self.card_time_in_list(card))
-        return card_times_in_list
+        return [self.card_time_in_list(card) for card in self.board.active_cards]
 
     def active_cards_time_in_list(self):
         card_times = self.active_cards_times

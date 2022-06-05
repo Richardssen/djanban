@@ -23,14 +23,16 @@ def burndown(board, requirement=None):
 def _requirement_burndown(board, requirement):
     # Caching
     chart_uuid = "requirements._requirement_burndown-{0}".format(requirement.id)
-    svg_chart = CachedChart.get(board=board, uuid=chart_uuid)
-    if svg_chart:
+    if svg_chart := CachedChart.get(board=board, uuid=chart_uuid):
         return svg_chart
 
     board = requirement.board
 
-    chart_title = u"Burndown of requirement {0}".format(requirement.code)
-    chart_title += u" for board {0} as of {1}".format(board.name, board.get_human_fetch_datetime())
+    chart_title = u"Burndown of requirement {0}".format(
+        requirement.code
+    ) + u" for board {0} as of {1}".format(
+        board.name, board.get_human_fetch_datetime()
+    )
 
     burndown_chart = pygal.Line(title=chart_title, legend_at_bottom=True, print_values=True,
                                 x_labels_major_count=30, show_minor_x_labels=False,
@@ -73,7 +75,11 @@ def _requirement_burndown(board, requirement):
             x_labels.append(date_i.strftime("%Y-%m-%d"))
         date_i += timedelta(days=1)
 
-    burndown_chart.add(u"Initial estimation for {0}".format(requirement.code), [remaining_time for i in range(0, len(x_labels))])
+    burndown_chart.add(
+        u"Initial estimation for {0}".format(requirement.code),
+        [remaining_time for _ in range(len(x_labels))],
+    )
+
     burndown_chart.x_labels = x_labels
     burndown_chart.add(u"Burndown of {0}".format(requirement.code), remaining_time_values)
 
@@ -90,8 +96,9 @@ def _burndown_by_requirement(board):
     if chart:
         return chart
 
-    chart_title = u"Burndown for board {0}".format(board.name)
-    chart_title += u" as of {1}".format(board.name, board.get_human_fetch_datetime())
+    chart_title = u"Burndown for board {0}".format(
+        board.name
+    ) + u" as of {1}".format(board.name, board.get_human_fetch_datetime())
 
     burndown_chart = pygal.Line(title=chart_title, legend_at_bottom=True, print_values=True,
                                 x_labels_major_count=30, show_minor_x_labels=False,
@@ -134,7 +141,11 @@ def _burndown_by_requirement(board):
             x_labels.append(date_i.strftime("%Y-%m-%d"))
         date_i += timedelta(days=1)
 
-    burndown_chart.add(u"{0} requirements estimation".format(board.name), [remaining_time for i in range(0, len(x_labels))])
+    burndown_chart.add(
+        u"{0} requirements estimation".format(board.name),
+        [remaining_time for _ in range(len(x_labels))],
+    )
+
     burndown_chart.x_labels = x_labels
     burndown_chart.add(u"Burndown according to {0} requirements".format(board.name), remaining_time_values)
 

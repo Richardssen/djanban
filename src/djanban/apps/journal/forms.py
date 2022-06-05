@@ -47,7 +47,10 @@ class NewJournalEntryForm(JournalEntryForm):
         self.instance.creation_datetime = now
         self.instance.last_update_datetime = now
         self.instance.uuid = shortuuid.ShortUUID().random(length=16).lower()
-        self.instance.slug = "{0}-{1}".format(slugify(self.instance.title)[0:112], self.instance.uuid)
+        self.instance.slug = "{0}-{1}".format(
+            slugify(self.instance.title)[:112], self.instance.uuid
+        )
+
         super(NewJournalEntryForm, self).save(commit=False)
         if commit:
             self.instance.save()

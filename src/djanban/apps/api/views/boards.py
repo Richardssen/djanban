@@ -79,7 +79,7 @@ def add_member(request, board_id):
         return JsonResponse(serializer.serialize_member(board.members.get(id=member_id)))
 
     member_type = put_body.get("member_type")
-    if not member_type or not member_type in ("admin", "normal", "guest"):
+    if not member_type or member_type not in ("admin", "normal", "guest"):
         return JsonResponseNotFound({"message": "Member type not found"})
 
     try:

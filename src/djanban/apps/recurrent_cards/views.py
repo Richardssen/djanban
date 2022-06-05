@@ -68,11 +68,10 @@ def view_list(request, board_id):
 
     if form and form.is_valid():
         recurrent_cards = form.get_recurrent_cards()
-    else:
-        if user_is_administrator(request.user):
-            recurrent_cards = WeeklyRecurrentCard.objects.filter(board=board).order_by("name")
-        elif member:
-            recurrent_cards = member.recurrent_cards.filter(board=board).order_by("name")
+    elif user_is_administrator(request.user):
+        recurrent_cards = WeeklyRecurrentCard.objects.filter(board=board).order_by("name")
+    elif member:
+        recurrent_cards = member.recurrent_cards.filter(board=board).order_by("name")
 
     replacements = {"recurrent_cards": recurrent_cards, "member": member, "board": board, "form": form}
     return render(request, "recurrent_cards/list.html", replacements)
@@ -117,6 +116,4 @@ def _get_user_board(current_user, board_id):
 
 # Get user member or None
 def _get_user_member_or_none(current_user):
-    if user_is_member(current_user):
-        return current_user.member
-    return None
+    return current_user.member if user_is_member(current_user) else None

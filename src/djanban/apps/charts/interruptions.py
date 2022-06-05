@@ -163,13 +163,10 @@ def _number_of_interruptions_by_member(current_user, chart_title, interruption_m
     else:
         datetime_filter = "datetime__date"
 
-    interruptions_filter = {}
-
     boards = get_user_boards(current_user)
     members = Member.objects.filter(boards__in=boards).distinct()
     member_values = {member.id: [] for member in members}
-    interruptions_filter["member__in"] = members
-
+    interruptions_filter = {"member__in": members}
     interruptions = Interruption.objects.filter(**interruptions_filter).order_by("datetime")
 
     interruptions = Interruption.objects.filter(**interruptions_filter).order_by("datetime")
@@ -264,11 +261,7 @@ def _interruption_measurement_by_month(current_user, chart_title, interruption_m
     last_month = max_datetime.month
     last_year = max_datetime.year
 
-    if board is None:
-        boards = get_user_boards(current_user)
-    else:
-        boards = [board]
-
+    boards = get_user_boards(current_user) if board is None else [board]
     months = []
     values = []
     board_values = {board.id: [] for board in boards}

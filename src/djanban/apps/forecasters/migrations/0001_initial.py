@@ -6,6 +6,8 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
+
+
 class Migration(migrations.Migration):
 
     initial = True
@@ -19,34 +21,126 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Forecast',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('estimated_spent_time', models.DecimalField(decimal_places=4, max_digits=12, verbose_name='Estimated spent time')),
-                ('last_update_datetime', models.DateTimeField(verbose_name='Date this estimation was done')),
-                ('card', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='forecasts', to='boards.Card', verbose_name='Card for this forecast')),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name='ID',
+                    ),
+                ),
+                (
+                    'estimated_spent_time',
+                    models.DecimalField(
+                        decimal_places=4,
+                        max_digits=12,
+                        verbose_name='Estimated spent time',
+                    ),
+                ),
+                (
+                    'last_update_datetime',
+                    models.DateTimeField(
+                        verbose_name='Date this estimation was done'
+                    ),
+                ),
+                (
+                    'card',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='forecasts',
+                        to='boards.Card',
+                        verbose_name='Card for this forecast',
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
             name='Forecaster',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=1024, verbose_name='Name')),
-                ('model', models.CharField(max_length=32, verbose_name='Regression model')),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name='ID',
+                    ),
+                ),
+                (
+                    'name',
+                    models.CharField(max_length=1024, verbose_name='Name'),
+                ),
+                (
+                    'model',
+                    models.CharField(
+                        max_length=32, verbose_name='Regression model'
+                    ),
+                ),
                 ('formula', models.TextField(verbose_name='Formula')),
-                ('summary', models.TextField(blank=True, default='', verbose_name='Summary')),
-                ('results_file', models.FileField(upload_to=b'', verbose_name='Field with the statsmodels results')),
-                ('last_update_datetime', models.DateTimeField(verbose_name='Last update datetime')),
-                ('board', models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='forecasters', to='boards.Board', verbose_name='Board of this forecaster')),
-                ('creator', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='created_forecasters', to='members.Member', verbose_name='Member')),
-                ('member', models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='forecasters', to='members.Member', verbose_name='Member of this forecaster')),
+                (
+                    'summary',
+                    models.TextField(
+                        blank=True, default='', verbose_name='Summary'
+                    ),
+                ),
+                (
+                    'results_file',
+                    models.FileField(
+                        upload_to=b'',
+                        verbose_name='Field with the statsmodels results',
+                    ),
+                ),
+                (
+                    'last_update_datetime',
+                    models.DateTimeField(verbose_name='Last update datetime'),
+                ),
+                (
+                    'board',
+                    models.ForeignKey(
+                        blank=True,
+                        default=None,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='forecasters',
+                        to='boards.Board',
+                        verbose_name='Board of this forecaster',
+                    ),
+                ),
+                (
+                    'creator',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='created_forecasters',
+                        to='members.Member',
+                        verbose_name='Member',
+                    ),
+                ),
+                (
+                    'member',
+                    models.ForeignKey(
+                        blank=True,
+                        default=None,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='forecasters',
+                        to='members.Member',
+                        verbose_name='Member of this forecaster',
+                    ),
+                ),
             ],
         ),
         migrations.AddField(
             model_name='forecast',
             name='forecaster',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='forecasts', to='forecasters.Forecaster', verbose_name='Spent time for this forecast'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='forecasts',
+                to='forecasters.Forecaster',
+                verbose_name='Spent time for this forecast',
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='forecast',
-            unique_together=set([('forecaster', 'card')]),
+            name='forecast', unique_together={('forecaster', 'card')}
         ),
     ]

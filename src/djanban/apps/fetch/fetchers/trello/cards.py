@@ -72,8 +72,7 @@ class CardFetcher(object):
 
         # Card movements
         for card in self.cards:
-            movements = self.trello_movements_by_card.get(card.uuid)
-            if movements:
+            if movements := self.trello_movements_by_card.get(card.uuid):
                 # For each card movement, we update its values if needed
                 for movement in movements:
                     # Check if movement occurs inside the board. Those movements that happen outside the board
@@ -260,11 +259,7 @@ class CardFetcher(object):
                 card_comment = CardComment(uuid=uuid, card=card, board=card.board, author=author,
                                            creation_datetime=comment_creation_datetime, content=content)
 
-            #print "{0} {1} {2}".format(card.name, card_comment.content, card_comment.creation_datetime)
-
-            # Check if comment has a blocking card
-            blocking_card = card_comment.blocking_card_from_content
-            if blocking_card:
+            if blocking_card := card_comment.blocking_card_from_content:
                 card_comment.blocking_card = blocking_card
 
             card_comment.save()
@@ -348,12 +343,15 @@ class CardFetcher(object):
         # Cycle and Lead times
         if trello_card.idList == self.done_list.uuid:
             trello_card.lead_time = sum(
-                [list_stats["time"] if list_uuid in self.trello_lead_dict else 0 for list_uuid, list_stats in
-                 trello_card.stats_by_list.items()])
+                list_stats["time"] if list_uuid in self.trello_lead_dict else 0
+                for list_uuid, list_stats in trello_card.stats_by_list.items()
+            )
+
 
             trello_card.cycle_time = sum(
-                [list_stats["time"] if list_uuid in self.trello_cycle_dict else 0 for list_uuid, list_stats in
-                 trello_card.stats_by_list.items()])
+                list_stats["time"] if list_uuid in self.trello_cycle_dict else 0
+                for list_uuid, list_stats in trello_card.stats_by_list.items()
+            )
 
     # Compute the stats of this card
     def _init_trello_card_stats_by_list(self, trello_card):

@@ -38,17 +38,9 @@ class Initializer(TrelloConnector):
             # Fetch only active boards (those that are not archived in Trello)
             board_is_active = not trello_board.closed
             if (board_uuid is None or board_uuid == trello_board.id) and board_is_active:
-                board_already_exists = Board.objects.filter(uuid=trello_board.id).exists()
-                if not board_already_exists:
-                    board_name = trello_board.name
-                    board = Board(uuid=trello_board.id, name=board_name, description=trello_board.description,
-                                  last_activity_datetime=trello_board.date_last_activity,
-                                  public_access_code=shortuuid.ShortUUID().random(length=20).lower(),
-                                  creator=self.member, url=trello_board.url)
-                    board.save()
-                    if self.debug:
-                        print("Board {0} successfully created".format(board_name))
-                else:
+                if board_already_exists := Board.objects.filter(
+                    uuid=trello_board.id
+                ).exists():
                     board = Board.objects.get(uuid=trello_board.id)
                     board_is_updated = False
                     # Change in URL
@@ -69,6 +61,15 @@ class Initializer(TrelloConnector):
                     # Board name
                     board_name = board.name
 
+                else:
+                    board_name = trello_board.name
+                    board = Board(uuid=trello_board.id, name=board_name, description=trello_board.description,
+                                  last_activity_datetime=trello_board.date_last_activity,
+                                  public_access_code=shortuuid.ShortUUID().random(length=20).lower(),
+                                  creator=self.member, url=trello_board.url)
+                    board.save()
+                    if self.debug:
+                        print("Board {0} successfully created".format(board_name))
                 # Fetch all lists of this board
                 trello_lists = trello_board.all_lists()
                 _lists = []
@@ -85,7 +86,11 @@ class Initializer(TrelloConnector):
                         last_created_list = _list
 
                         if self.debug:
-                            print("- List {1} of board {0} successfully created".format(board_name, _list.name))
+                            print(
+                                "- List {1} of board {0} successfully created".format(
+                                    board_name, last_created_list.name
+                                )
+                            )
 
                     else:
                         _list = board.lists.get(uuid=trello_list.id)
@@ -179,12 +184,15 @@ class Initializer(TrelloConnector):
 
     # Create list for a board
     def create_list(self, board, list_name, list_position="bottom"):
-        trello_board = None
         trello_boards = self.trello_client.list_boards()
-        for trello_board_i in trello_boards:
-            if board.uuid == trello_board_i.id:
-                trello_board = trello_board_i
-                break
+        trello_board = next(
+            (
+                trello_board_i
+                for trello_board_i in trello_boards
+                if board.uuid == trello_board_i.id
+            ),
+            None,
+        )
 
         # Check if this board exist in Trello
         if trello_board is None:
@@ -302,10 +310,8 @@ class BoardFetcher(Fetcher):
         # There should be no need to assure uniqueness of the cards but it's better to be sure that
         # we have no repeated actions
         cards_dict = {card.id: card for card in cards}
-        unique_cards = cards_dict.values()
-
         # Return the cards
-        return unique_cards
+        return cards_dict.values()
 
     # Get the since parameter based on the actions we've got. That is, get the max date of the actions and prepare
     # the since parameter adding one microsecond to that date
@@ -316,8 +322,7 @@ class BoardFetcher(Fetcher):
         min_date = dateutil.parser.parse(min_date_str)
         # Get next possible date (max_date + 1 millisecond)
         before_date = min_date
-        before_date_str = before_date.strftime(BoardFetcher.DATE_FORMAT)[:-3] + "Z"
-        return before_date_str
+        return f"{before_date.strftime(BoardFetcher.DATE_FORMAT)[:-3]}Z"
 
     # Get the min date of a list of cards
     @staticmethod
@@ -330,13 +335,13 @@ class BoardFetcher(Fetcher):
 
     # Return the comments of the board grouped by the uuid of each card
     def _fetch_trello_comments_by_card(self):
-        comments_by_card = self._fetch_trello_actions_by_card(action_filter="commentCard", debug=True)
-        return comments_by_card
+        return self._fetch_trello_actions_by_card(
+            action_filter="commentCard", debug=True
+        )
 
     # Return the card movements of the board grouped by the uuid of each card
     def _fetch_trello_card_movements_by_card(self):
-        comments_by_card = self._fetch_trello_actions_by_card(action_filter="updateCard:idList")
-        return comments_by_card
+        return self._fetch_trello_actions_by_card(action_filter="updateCard:idList")
 
     # Return the actions of the board grouped by the uuid of each card
     def _fetch_trello_actions_by_card(self, action_filter, limit=1000, debug=False):
@@ -384,8 +389,7 @@ class BoardFetcher(Fetcher):
         min_date = dateutil.parser.parse(min_date_str)
         # Get next possible date (max_date + 1 millisecond)
         before_date = min_date
-        before_date_str = before_date.strftime(BoardFetcher.DATE_FORMAT)[:-3] + "Z"
-        return before_date_str
+        return f"{before_date.strftime(BoardFetcher.DATE_FORMAT)[:-3]}Z"
 
     # Get the min date of a list of actions
     # We are not sure about the actions order, so each time we make a fetch of the actions of this board, we have to get
@@ -417,12 +421,18 @@ class BoardFetcher(Fetcher):
             # Lead time and cycle time only should be computed when the card is done
             if not card.is_closed and trello_card.idList in done_lists:
                 # Lead time in this workflow for this card
-                lead_time = sum([list_stats["time"] for list_uuid, list_stats in trello_card.stats_by_list.items()])
+                lead_time = sum(
+                    list_stats["time"]
+                    for list_uuid, list_stats in trello_card.stats_by_list.items()
+                )
+
 
                 # Cycle time in this workflow for this card
                 cycle_time = sum(
-                    [list_stats["time"] if list_uuid in development_lists else 0 for list_uuid, list_stats in
-                     trello_card.stats_by_list.items()])
+                    list_stats["time"] if list_uuid in development_lists else 0
+                    for list_uuid, list_stats in trello_card.stats_by_list.items()
+                )
+
 
                 workflow_card_report = WorkflowCardReport(board=self.board, workflow=workflow,
                                                           card=card, cycle_time=cycle_time, lead_time=lead_time)

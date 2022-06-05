@@ -183,11 +183,7 @@ class MemberForm(models.ModelForm):
         return cleaned_data
 
     def save(self, commit=True):
-        if not self.instance.user:
-            user = User()
-        else:
-            user = self.instance.user
-
+        user = self.instance.user or User()
         user.first_name = self.cleaned_data.get("first_name")
         user.last_name = self.cleaned_data.get("last_name")
         user.username = self.cleaned_data.get("username", self.cleaned_data.get("email"))
@@ -382,7 +378,7 @@ class SpentTimeFactorForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(SpentTimeFactorForm, self).__init__(*args, **kwargs)
         current_year = timezone.now().year
-        available_years = [year_i for year_i in range(current_year-40, current_year+1)]
+        available_years = list(range(current_year-40, current_year+1))
         self.fields["start_date"].widget.years = available_years
         self.fields["end_date"].widget.years = available_years
 
@@ -390,7 +386,7 @@ class SpentTimeFactorForm(ModelForm):
         cleaned_data = super(SpentTimeFactorForm, self).clean()
         member = self.instance.member
         start_date = cleaned_data["start_date"]
-        end_date = cleaned_data.get("end_date") if cleaned_data.get("end_date") else timezone.now().date()
+        end_date = cleaned_data.get("end_date") or timezone.now().date()
         # Check if start_date is less or equal than end_date
         if start_date > end_date:
             raise ValidationError(u"Start date must be less or equal than end date")

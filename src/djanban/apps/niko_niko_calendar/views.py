@@ -23,10 +23,7 @@ from djanban.apps.niko_niko_calendar.models import DailyMemberMood
 # Show the niko-niko calendar. List the mood of the team.
 @login_required
 def view_calendar(request):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
-
+    member = request.user.member if user_is_member(request.user) else None
     boards = get_user_boards(request.user)
     members = Member.objects.filter(boards__in=boards).distinct().filter(is_developer=True).order_by("id")
 

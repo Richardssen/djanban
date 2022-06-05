@@ -18,17 +18,16 @@ class CardSerializer(object):
         card_age_in_seconds_decimal = Decimal(card.age_in_board.seconds / 3600.0).quantize(Decimal("1.000"))
         card_age_in_seconds = float(card_age_in_seconds_decimal)
         num_forward_movements = 0
+        num_backward_movements = 0
         if card_age_in_seconds > 0:
             if card.number_of_forward_movements > 0:
                 num_forward_movements = float(
                     (card.number_of_forward_movements / card_age_in_seconds_decimal).quantize(Decimal("1.000")))
-            num_backward_movements = 0
             if card.number_of_backward_movements > 0:
                 num_backward_movements = float(
                     (card.number_of_backward_movements / card_age_in_seconds_decimal).quantize(Decimal("1.000")))
         else:
             num_forward_movements = 0
-            num_backward_movements = 0
         name_num_words = len(re.split(r"\s+", card.name))
         description_num_words = len(re.split(r"\s+", card.description))
         card_data = {
@@ -64,8 +63,7 @@ class CardSerializer(object):
         for list_type in List.ACTIVE_LIST_TYPES:
             card_data["creation_list_type_{0}".format(list_type)] = 0
 
-        creation_list = card.creation_list
-        if creation_list:
+        if creation_list := card.creation_list:
             card_data["creation_list_type_{0}".format(creation_list.type)] = 1
 
         # Time per list type

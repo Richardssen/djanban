@@ -53,8 +53,7 @@ class EditBoardForm(models.ModelForm):
         return self.cleaned_data.get("title_color")
 
     def clean(self):
-        cleaned_data = super(EditBoardForm, self).clean()
-        return cleaned_data
+        return super(EditBoardForm, self).clean()
 
 
 # Board creation form
@@ -69,8 +68,7 @@ class NewBoardForm(models.ModelForm):
         super(NewBoardForm, self).__init__(*args, **kwargs)
 
     def clean(self):
-        cleaned_data = super(NewBoardForm, self).clean()
-        return cleaned_data
+        return super(NewBoardForm, self).clean()
 
     def save(self, commit=True):
         if commit:

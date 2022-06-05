@@ -74,7 +74,11 @@ def burndown(board, show_interruptions=False):
 
         date_i += timedelta(days=1)
 
-    burndown_chart.add(u"Initial estimation for {0}".format(board.name), [remaining_time for i in range(0, len(x_labels))])
+    burndown_chart.add(
+        u"Initial estimation for {0}".format(board.name),
+        [remaining_time for _ in range(len(x_labels))],
+    )
+
 
     burndown_chart.x_labels = x_labels
     burndown_chart.add(u"Burndown of {0}".format(board.name), remaining_time_values)

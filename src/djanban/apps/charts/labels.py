@@ -51,8 +51,7 @@ def avg_spent_times(request, board=None):
 
         for label in labels:
             if label.name:
-                label_avg_spent_time = label.avg_spent_time()
-                if label_avg_spent_time:
+                if label_avg_spent_time := label.avg_spent_time():
                     avg_times_chart.add(u"{0} - {1}".format(board.name, label.name), label_avg_spent_time)
 
     chart = CachedChart.make(board=board, uuid=chart_uuid, svg=avg_times_chart.render(is_unicode=True))
@@ -153,10 +152,7 @@ def _daily_spent_times_by_period(current_user, board=None, time_measurement="spe
     period_measurement_chart = pygal.StackedBar(title=chart_title, legend_at_bottom=True, print_values=True,
                                                 print_zeroes=False, x_label_rotation=45,
                                                 human_readable=True)
-    labels = []
-    if board:
-        labels = board.labels.all()
-
+    labels = board.labels.all() if board else []
     end_date= DailySpentTime.objects.filter(**daily_spent_time_filter).aggregate(max_date=Max("date"))["max_date"]
 
     date_i = DailySpentTime.objects.filter(**daily_spent_time_filter).aggregate(min_date=Min("date"))["min_date"]
@@ -208,9 +204,11 @@ def _daily_spent_times_by_period(current_user, board=None, time_measurement="spe
             # For each label that has a name (i.e. it is being used) and has a value, store its measurement per label
             for label in labels:
                 if label.name:
-                    label_measurement = period_times.filter(card__labels=label).\
-                                            aggregate(measurement=aggregation(time_measurement))["measurement"]
-                    if label_measurement:
+                    if label_measurement := period_times.filter(
+                        card__labels=label
+                    ).aggregate(measurement=aggregation(time_measurement))[
+                        "measurement"
+                    ]:
                         label_measurement_titles[label.id].append(measurement_title)
                         label_measurement_values[label.id].append(label_measurement)
 

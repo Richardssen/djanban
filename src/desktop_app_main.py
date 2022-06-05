@@ -133,17 +133,15 @@ if __name__ == '__main__':
         run_as_binary = False
 
     # set up logging and app_name
-    if run_as_binary is True:
+    if run_as_binary:
         log_file = os.path.join(base_dir, "../logs/", "Djanban.log")
         cherry_access_log = os.path.join(base_dir, "../logs/", "access.log")
         cherry_error_log = os.path.join(base_dir, "../logs/", "error.log")
-        app_name = "Djanban"
     else:
         log_file = os.path.join(base_dir, "logs/Djanban.log")
         cherry_access_log = os.path.join(base_dir, "logs/access.log")
         cherry_error_log = os.path.join(base_dir, "logs/error.log")
-        app_name = "Djanban"
-
+    app_name = "Djanban"
     log = logging.getLogger("Djanban")
     log.setLevel(logging.DEBUG)
     handler = logging.handlers.RotatingFileHandler(log_file,

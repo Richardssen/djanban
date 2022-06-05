@@ -76,8 +76,7 @@ class Member(models.Model):
                     (spent_time_factor.start_date <= date and spent_time_factor.end_date is None) or \
                     (spent_time_factor.start_date <= date <= spent_time_factor.end_date):
 
-                adjusted_value = spent_time * spent_time_factor.factor
-                return adjusted_value
+                return spent_time * spent_time_factor.factor
 
         # In case there is no date interval which date belongs to, return the spent time
         return spent_time
@@ -169,9 +168,7 @@ class Member(models.Model):
     # - Public members.
     @property
     def viewable_members(self):
-        boards = []
-        if self.user:
-            boards = get_user_boards(self.user)
+        boards = get_user_boards(self.user) if self.user else []
         return Member.objects.filter(Q(boards__in=boards) | Q(creator=self) | Q(is_public=True)).distinct()
 
     # Get member companions of the same boards
@@ -341,12 +338,14 @@ class Member(models.Model):
     def _sum_adjusted_spent_time_from_filter(self, daily_spent_time_filter):
         daily_spent_times = self.daily_spent_times.filter(**daily_spent_time_filter)
         spent_time_factors = self.spent_time_factors.all()
-        adjusted_spent_time_sum = 0
-        for daily_spent_time in daily_spent_times:
-            adjusted_spent_time_sum += self.adjust_daily_spent_time(
-                daily_spent_time, attribute="spent_time", spent_time_factors=spent_time_factors
+        return sum(
+            self.adjust_daily_spent_time(
+                daily_spent_time,
+                attribute="spent_time",
+                spent_time_factors=spent_time_factors,
             )
-        return adjusted_spent_time_sum
+            for daily_spent_time in daily_spent_times
+        )
 
     # Returns the number of hours this member has develop given a filter
     @staticmethod
@@ -469,7 +468,10 @@ class Member(models.Model):
             x = 1
             y = 10
 
-        font = ImageFont.truetype(settings.BASE_DIR + "/fonts/vera.ttf", size=font_size)
+        font = ImageFont.truetype(
+            f"{settings.BASE_DIR}/fonts/vera.ttf", size=font_size
+        )
+
         canvas = Image.new('RGB', (30, 30), (255, 255, 255))
         draw = ImageDraw.Draw(canvas)
         draw.text((x, y), initials, font=font, fill=(0, 0, 0, 255))
@@ -506,40 +508,31 @@ class Member(models.Model):
     @property
     def std_dev_card_lead_time(self):
         values = [float(card_i.lead_time) for card_i in self.active_cards.exclude(lead_time=None)]
-        std_dev_time = numpy.nanstd(values)
-        return std_dev_time
+        return numpy.nanstd(values)
 
     # Standard deviation of the spent time of the cards of this member
     @property
     def std_dev_card_spent_time(self):
         values = [float(card_i.spent_time) for card_i in self.active_cards.exclude(spent_time=None)]
-        std_dev_time = numpy.nanstd(values)
-        return std_dev_time
+        return numpy.nanstd(values)
 
     # Standard deviation of the estimated time of the cards of this member
     @property
     def std_dev_card_estimated_time(self):
         values = [float(card_i.estimated_time) for card_i in self.active_cards.exclude(estimated_time=None)]
-        std_dev_time = numpy.nanstd(values)
-        return std_dev_time
+        return numpy.nanstd(values)
 
     @property
     def first_name(self):
-        if self.user:
-            return self.user.first_name
-        return None
+        return self.user.first_name if self.user else None
 
     @property
     def last_name(self):
-        if self.user:
-            return self.user.last_name
-        return None
+        return self.user.last_name if self.user else None
 
     @property
     def email(self):
-        if self.user:
-            return self.user.email
-        return None
+        return self.user.email if self.user else None
 
 
 # Spent factors of each member
@@ -602,6 +595,4 @@ class TrelloMemberProfile(models.Model):
 
     @property
     def user(self):
-        if self.member:
-            return self.member.user
-        return None
+        return self.member.user if self.member else None

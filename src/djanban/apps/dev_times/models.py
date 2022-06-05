@@ -118,9 +118,7 @@ class DailySpentTime(models.Model):
                                           date=date, day_of_year=day_of_year, week_of_year=week_of_year,
                                           weekday=weekday)
 
-        # Rate amount computation
-        hourly_rate = board.get_date_hourly_rate(date)
-        if hourly_rate:
+        if hourly_rate := board.get_date_hourly_rate(date):
             if daily_spent_time.rate_amount is None:
                 daily_spent_time.rate_amount = 0
             daily_spent_time.rate_amount += hourly_rate.amount
@@ -164,30 +162,35 @@ class DailySpentTime(models.Model):
         if spent_time is not None and hourly_rate is not None:
             rate_amount = spent_time * hourly_rate.amount
 
-        daily_spent_time = DailySpentTime(
-            uuid=comment.uuid, board=board, card=card, comment=comment,
-            date=spent_estimated_time["date"], weekday=weekday, week_of_year=week_of_year, day_of_year=day_of_year,
-            spent_time=spent_time, adjusted_spent_time=adjusted_spent_time,
-            estimated_time=estimated_time, diff_time=diff_time,
+        return DailySpentTime(
+            uuid=comment.uuid,
+            board=board,
+            card=card,
+            comment=comment,
+            date=spent_estimated_time["date"],
+            weekday=weekday,
+            week_of_year=week_of_year,
+            day_of_year=day_of_year,
+            spent_time=spent_time,
+            adjusted_spent_time=adjusted_spent_time,
+            estimated_time=estimated_time,
+            diff_time=diff_time,
             description=spent_estimated_time["description"],
-            member=comment.author, rate_amount=rate_amount
+            member=comment.author,
+            rate_amount=rate_amount,
         )
-        return daily_spent_time
 
     @staticmethod
     def create_from_comment(comment):
         daily_spent_time = DailySpentTime.factory_from_comment(comment)
-        if comment.id:
-            daily_spent_time.save()
-        else:
+        if not comment.id:
             daily_spent_time.comment = None
-            daily_spent_time.save()
+        daily_spent_time.save()
         return daily_spent_time
 
     # Set daily spent time from a card comment
     def set_from_comment(self, comment):
-        spent_estimated_time = comment.spent_estimated_time
-        if spent_estimated_time:
+        if spent_estimated_time := comment.spent_estimated_time:
             date = spent_estimated_time["date"]
             spent_time = spent_estimated_time["spent_time"]
             estimated_time = spent_estimated_time["estimated_time"]

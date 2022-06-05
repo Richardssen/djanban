@@ -74,19 +74,29 @@ class Serializer(object):
 
             lists_json.append(list_json)
 
-        board_json = {
+        return {
             "id": self.board.id,
             "uuid": self.board.uuid,
             "name": self.board.name,
             "description": self.board.description,
             "local_url": reverse("boards:view", args=(self.board.id,)),
-            "identicon_url": reverse("boards:view_identicon", args=(self.board.id, 40, 40)),
+            "identicon_url": reverse(
+                "boards:view_identicon", args=(self.board.id, 40, 40)
+            ),
             "lists": lists_json,
-            "members": [self.serialized_members_by_id[member.id] for member in self.board.members.all().order_by("id")],
-            "labels": [self.serialized_labels_by_id[label.id] for label in self.board.labels.exclude(name="").order_by("name")],
-            "requirements": [self.serialize_requirement(requirement) for requirement in self.board.requirements.all()],
+            "members": [
+                self.serialized_members_by_id[member.id]
+                for member in self.board.members.all().order_by("id")
+            ],
+            "labels": [
+                self.serialized_labels_by_id[label.id]
+                for label in self.board.labels.exclude(name="").order_by("name")
+            ],
+            "requirements": [
+                self.serialize_requirement(requirement)
+                for requirement in self.board.requirements.all()
+            ],
         }
-        return board_json
 
     # Basic card serialization
     def basic_serialize_card(self, card):
@@ -125,12 +135,18 @@ class Serializer(object):
             comment_json = self.serialize_card_comment(comment)
             comments_json.append(comment_json)
 
-        card_json = {
+        return {
             "id": card.id,
             "uuid": card.uuid,
             "name": card.name,
             "description": card.description,
-            "local_url": reverse("boards:view_card", args=(card.board_id, card.id,)),
+            "local_url": reverse(
+                "boards:view_card",
+                args=(
+                    card.board_id,
+                    card.id,
+                ),
+            ),
             "url": card.url,
             "short_url": card.short_url,
             "position": card.position,
@@ -146,53 +162,92 @@ class Serializer(object):
             "cycle_time": card.cycle_time,
             "number_of_attachments": card.number_of_attachments,
             "forecasts": [
-                self.serialize_forecast(forecast) for forecast in card.forecasts.all().order_by("-last_update_datetime")
+                self.serialize_forecast(forecast)
+                for forecast in card.forecasts.all().order_by(
+                    "-last_update_datetime"
+                )
             ],
             "attachments": [
                 self.serialize_card_attachment(attachment)
-                for attachment in card.attachments.all().order_by("-creation_datetime")
+                for attachment in card.attachments.all().order_by(
+                    "-creation_datetime"
+                )
             ],
-            "labels": [self.serialize_label(label) for label in card.labels.exclude(name="").order_by("name")],
+            "labels": [
+                self.serialize_label(label)
+                for label in card.labels.exclude(name="").order_by("name")
+            ],
             "board": {
                 "id": self.board.id,
                 "uuid": self.board.uuid,
                 "name": self.board.name,
-                "lists": [self.serialize_list(list_) for list_ in self.board.active_lists.order_by("position")],
-                "labels": [self.serialize_label(label) for label in self.board.labels.exclude(name="").order_by("name")]
+                "lists": [
+                    self.serialize_list(list_)
+                    for list_ in self.board.active_lists.order_by("position")
+                ],
+                "labels": [
+                    self.serialize_label(label)
+                    for label in self.board.labels.exclude(name="").order_by(
+                        "name"
+                    )
+                ],
             },
             "list": self.serialize_list(card_list),
-            "members": [self.serialize_member(member) for member in card.members.all().order_by("id")],
+            "members": [
+                self.serialize_member(member)
+                for member in card.members.all().order_by("id")
+            ],
             "blocking_cards": [
                 {
                     "id": blocking_card.id,
                     "uuid": blocking_card.uuid,
                     "name": blocking_card.name,
                     "description": blocking_card.description,
-                    "url": reverse("boards:view_card", args=(self.board.id, blocking_card.id,)),
+                    "url": reverse(
+                        "boards:view_card",
+                        args=(
+                            self.board.id,
+                            blocking_card.id,
+                        ),
+                    ),
                     "short_url": blocking_card.short_url,
                     "position": blocking_card.position,
-                    "list": self.serialize_list(blocking_card.list)
+                    "list": self.serialize_list(blocking_card.list),
                 }
-                for blocking_card in card.blocking_cards.order_by("creation_datetime")
-                ],
+                for blocking_card in card.blocking_cards.order_by(
+                    "creation_datetime"
+                )
+            ],
             "movements": [
                 {
                     "id": movement.id,
                     "source_list": self.serialize_list(movement.source_list),
-                    "destination_list": self.serialize_list(movement.destination_list),
+                    "destination_list": self.serialize_list(
+                        movement.destination_list
+                    ),
                     "datetime": movement.datetime,
-                    "member": self.serialize_member(movement.member)
+                    "member": self.serialize_member(movement.member),
                 }
                 for movement in card.movements.all().order_by("-datetime")
-                ],
-            "reviews": [self.serialize_card_review(review) for review in card.reviews.all().order_by("-creation_datetime")],
-            "requirements": [self.serialize_requirement(requirement) for requirement in card.requirements.all()],
+            ],
+            "reviews": [
+                self.serialize_card_review(review)
+                for review in card.reviews.all().order_by("-creation_datetime")
+            ],
+            "requirements": [
+                self.serialize_requirement(requirement)
+                for requirement in card.requirements.all()
+            ],
             "charts": {
-                "number_of_comments_by_member": reverse("charts:number_of_comments_by_member", args=(self.board.id, card.id)),
-                "number_of_comments": reverse("charts:number_of_comments", args=(self.board.id, card.id))
-            }
+                "number_of_comments_by_member": reverse(
+                    "charts:number_of_comments_by_member",
+                    args=(self.board.id, card.id),
+                ),
+                "number_of_comments": reverse(
+                    "charts:number_of_comments", args=(self.board.id, card.id)
+                ),
+            },
         }
-        return card_json
 
     # Serialize label
     def serialize_label(self, label):
@@ -207,16 +262,20 @@ class Serializer(object):
     def serialize_card_attachment(self, attachment):
         self._init_member_cache()
         serialized_uploader = self.serialized_members_by_id[attachment.uploader_id]
-        attachment_json = {
+        return {
             "id": attachment.id,
             "uuid": attachment.uuid,
             "uploader": serialized_uploader,
-            "filename": attachment.file.name if attachment.file else attachment.external_file_name,
-            #"url": attachment.file.url,
-            "url": reverse("boards:download_attachment", args=(self.board.id, attachment.card_id, attachment.id)),
+            "filename": attachment.file.name
+            if attachment.file
+            else attachment.external_file_name,
+            # "url": attachment.file.url,
+            "url": reverse(
+                "boards:download_attachment",
+                args=(self.board.id, attachment.card_id, attachment.id),
+            ),
             "creation_datetime": attachment.creation_datetime,
         }
-        return attachment_json
 
     # Serialize card comment
     def serialize_card_comment(self, comment):
@@ -233,7 +292,7 @@ class Serializer(object):
             valued_card = None
 
         serialized_author = self.serialized_members_by_id[comment.author_id]
-        comment_json = {
+        return {
             "id": comment.id,
             "uuid": comment.uuid,
             "content": comment.content,
@@ -245,23 +304,40 @@ class Serializer(object):
                 "uuid": comment.blocking_card.uuid,
                 "name": comment.blocking_card.name,
                 "description": comment.blocking_card.description,
-                "url": reverse("boards:view_card", args=(self.board.id, comment.blocking_card.id,)),
+                "url": reverse(
+                    "boards:view_card",
+                    args=(
+                        self.board.id,
+                        comment.blocking_card.id,
+                    ),
+                ),
                 "short_url": comment.blocking_card.short_url,
-                "position": comment.blocking_card.position
-            } if comment.blocking_card else None,
+                "position": comment.blocking_card.position,
+            }
+            if comment.blocking_card
+            else None,
             "valued_card": {
                 "id": valued_card.id,
                 "uuid": valued_card.uuid,
                 "name": valued_card.name,
                 "description": valued_card.description,
-                "url": reverse("boards:view_card", args=(self.board.id, valued_card.id,)),
+                "url": reverse(
+                    "boards:view_card",
+                    args=(
+                        self.board.id,
+                        valued_card.id,
+                    ),
+                ),
                 "short_url": valued_card.short_url,
-                "position": valued_card.position
-            } if valued_card else None,
+                "position": valued_card.position,
+            }
+            if valued_card
+            else None,
             "review": self.serialize_card_review(review) if review else None,
-            "requirement": self.serialize_requirement(comment.requirement) if comment.requirement else None
+            "requirement": self.serialize_requirement(comment.requirement)
+            if comment.requirement
+            else None,
         }
-        return comment_json
 
     # Serialize card review
     def serialize_card_review(self, review):
@@ -286,30 +362,31 @@ class Serializer(object):
 
     # List serialization
     def serialize_list(self, list_):
-        list_json = {
+        return {
             "id": list_.id,
             "name": list_.name,
             "uuid": list_.uuid,
             "type": list_.type,
             "position": list_.position,
-            "wip_limit": list_.wip_limit
+            "wip_limit": list_.wip_limit,
         }
-        return list_json
 
     # Member serialization
     def serialize_member(self, member):
 
-        member_json = {
+        return {
             "id": member.id,
             "external_username": member.external_username,
             "initials": member.initials,
-            "is_current_user": True if self.current_member and member.id == self.current_member.id else False,
+            "is_current_user": bool(
+                self.current_member and member.id == self.current_member.id
+            ),
             "avatar_url": member.avatar_url,
             "roles_by_board": {
-                member_role.board_id: member_role.type for member_role in member.roles.all()
-            }
+                member_role.board_id: member_role.type
+                for member_role in member.roles.all()
+            },
         }
-        return member_json
 
     # Requirement serialization
     def serialize_requirement(self, requirement):

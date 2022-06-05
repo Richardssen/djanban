@@ -18,11 +18,11 @@ class NewWorkflowForm(models.ModelForm):
         # Creation of pair of lists of lists for development and done
         lists = workflow.board.lists.all().order_by("id")
         num_lists = lists.count()
-        list_position = {lists[i].id: i+1 for i in range(0, num_lists)}
+        list_position = {lists[i].id: i+1 for i in range(num_lists)}
         list_choices = [("empty", "Empty")]+[(list_.id, list_.name) for list_ in lists]
 
         # Development lists
-        for list_i in range(0, num_lists):
+        for list_i in range(num_lists):
             development_list_name_i = "development_list_{0}".format(list_i)
             self.fields[development_list_name_i] = models.ChoiceField(choices=list_choices, initial="empty",
                                                                       label=u"'Development' list in position {0}".format(list_i))
@@ -32,7 +32,7 @@ class NewWorkflowForm(models.ModelForm):
                 self.fields[development_list_name_i].initial = list_position[list_id_in_position_i]
 
         # Done lists
-        for list_i in range(0, num_lists):
+        for list_i in range(num_lists):
             done_list_name_i = "done_list_{0}".format(list_i)
             self.fields[done_list_name_i] = models.ChoiceField(choices=list_choices, initial="empty",
                                                                label=u"'Done' list in position {0}".format(list_i))

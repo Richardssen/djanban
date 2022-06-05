@@ -21,10 +21,7 @@ from djanban.apps.journal.models import JournalEntry, JournalEntryTag
 # Journal
 @login_required
 def view(request, board_id):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
-
+    member = request.user.member if user_is_member(request.user) else None
     board = get_object_or_404(Board, id=board_id)
 
     journal_entry_filter = {}
@@ -50,10 +47,7 @@ def view(request, board_id):
 @login_required
 def view_entry(request, board_id, year, month, journal_entry_slug):
 
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
-
+    member = request.user.member if user_is_member(request.user) else None
     board = get_user_board_or_404(request.user, board_id)
 
     journal_entry = get_object_or_404(

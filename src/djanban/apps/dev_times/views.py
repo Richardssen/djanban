@@ -122,14 +122,16 @@ def send_daily_spent_times(request):
             current_user.member.multiboards.filter(id=multiboard_str).exists():
         multiboard = current_user.member.multiboards.get(id=multiboard_str)
         daily_spent_times_filter["board__multiboards"] = multiboard
-    # Filter spent time by label o board
     else:
         # Label
         label_str = request.POST.get("label")
         matches = re.match(r"all_from_board_(?P<board_id>\d+)", label_str)
-        if matches and current_user_boards.filter(id=matches.group("board_id")).exists():
+        if (
+            matches
+            and current_user_boards.filter(id=matches["board_id"]).exists()
+        ):
             label = None
-            board = current_user_boards.get(id=matches.group("board_id"))
+            board = current_user_boards.get(id=matches["board_id"])
             daily_spent_times_filter["board"] = board
 
         elif Label.objects.filter(id=label_str).exists():
@@ -188,11 +190,10 @@ def send_daily_spent_times(request):
 # Return the filtered queryset and the replacements given the GET parameters
 def _get_daily_spent_times_replacements(request):
 
-    selected_member_id = request.GET.get("member_id")
-    selected_member = None
-    if selected_member_id:
+    if selected_member_id := request.GET.get("member_id"):
         selected_member = Member.objects.get(id=selected_member_id)
-
+    else:
+        selected_member = None
     spent_times = _get_daily_spent_times_from_request(request)
 
     replacements = {
@@ -202,9 +203,7 @@ def _get_daily_spent_times_replacements(request):
         "members": Member.objects.all()
     }
 
-    # Start date
-    start_date_str = request.GET.get("start_date")
-    if start_date_str:
+    if start_date_str := request.GET.get("start_date"):
         try:
             start_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d")
             replacements["start_date"] = start_date
@@ -212,9 +211,7 @@ def _get_daily_spent_times_replacements(request):
         except ValueError:
             start_date = None
 
-    # End date
-    end_date_str = request.GET.get("end_date")
-    if end_date_str:
+    if end_date_str := request.GET.get("end_date"):
         try:
             end_date = datetime.datetime.strptime(end_date_str, "%Y-%m-%d")
             replacements["end_date"] = end_date
@@ -237,9 +234,10 @@ def _get_daily_spent_times_replacements(request):
         label = None
         board = None
         if label_id:
-            matches = re.match(r"all_from_board_(?P<board_id>\d+)", label_id)
-            if matches:
-                board = get_user_boards(request.user).get(id=matches.group("board_id"))
+            if matches := re.match(
+                r"all_from_board_(?P<board_id>\d+)", label_id
+            ):
+                board = get_user_boards(request.user).get(id=matches["board_id"])
                 label = None
                 replacements["selected_label"] = label
                 replacements["label"] = label
@@ -276,23 +274,22 @@ def _get_daily_spent_times_from_request(request):
     if request.GET.get("member_id"):
         selected_member = Member.objects.get(id=request.GET.get("member_id"))
 
-    multiboard_id = None
-    if request.GET.get("multiboard_id"):
-        multiboard_id = request.GET.get("multiboard_id")
-
+    multiboard_id = request.GET.get("multiboard_id") or None
     label_id = None
     if request.GET.get("label_id"):
         label_id = request.GET.get("label_id")
     elif request.GET.get("board_id"):
         label_id = "all_from_board_{0}".format(request.GET.get("board_id"))
 
-    spent_times = _get_daily_spent_times_queryset(
-        current_user, selected_member,
-        request.GET.get("start_date"), request.GET.get("end_date"), request.GET.get('week'),
-        label_id=label_id, multiboard_id=multiboard_id
+    return _get_daily_spent_times_queryset(
+        current_user,
+        selected_member,
+        request.GET.get("start_date"),
+        request.GET.get("end_date"),
+        request.GET.get('week'),
+        label_id=label_id,
+        multiboard_id=multiboard_id,
     )
-
-    return spent_times
 
 
 # Return the filtered queryset and the replacements given the GET parameters

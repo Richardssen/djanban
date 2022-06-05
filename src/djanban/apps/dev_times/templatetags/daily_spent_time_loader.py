@@ -40,10 +40,9 @@ def get_daily_spent_times(current_user, member=None, start_date=None, end_date=N
     if label and board and board.labels.filter(id=label.id).exists():
         daily_spent_time_filter["card__labels"] = board.labels.get(id=label.id)
 
-    # Daily Spent Times
-    daily_spent_times = DailySpentTime.objects.filter(**daily_spent_time_filter).order_by("-date")
-
-    return daily_spent_times
+    return DailySpentTime.objects.filter(**daily_spent_time_filter).order_by(
+        "-date"
+    )
 
 
 @register.filter
@@ -85,7 +84,7 @@ def _adjusted_daily_spent_time_attribute_sum(daily_spent_times, attribute="spent
     adjusted_value_sum = 0
     member_dict = {}
     for daily_spent_time in daily_spent_times:
-        if not daily_spent_time.member_id in member_dict:
+        if daily_spent_time.member_id not in member_dict:
             member_dict[daily_spent_time.member_id] = daily_spent_time.member
 
         member = member_dict[daily_spent_time.member_id]

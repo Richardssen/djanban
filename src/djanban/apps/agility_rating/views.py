@@ -17,9 +17,7 @@ from djanban.apps.boards.models import Board
 # View agility rating
 @login_required
 def view(request, board_id):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
+    member = request.user.member if user_is_member(request.user) else None
     board = get_user_board_or_404(request.user, board_id)
 
     try:
@@ -34,10 +32,7 @@ def view(request, board_id):
 # New agility rating
 @member_required
 def new(request, board_id):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
-
+    member = request.user.member if user_is_member(request.user) else None
     board = get_user_board_or_404(request.user, board_id)
 
     project_agility_rating = ProjectAgilityRating(board=board)
@@ -57,9 +52,7 @@ def new(request, board_id):
 # Edition of the project agility rating
 @member_required
 def edit(request, board_id):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
+    member = request.user.member if user_is_member(request.user) else None
     try:
         board = get_user_board_or_404(request.user, board_id)
         project_agility_rating = board.agility_rating
@@ -82,9 +75,7 @@ def edit(request, board_id):
 # Delete the project agility rating
 @member_required
 def delete(request, board_id):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
+    member = request.user.member if user_is_member(request.user) else None
     try:
         board = get_user_board_or_404(request.user, board_id)
         project_agility_rating = board.agility_rating

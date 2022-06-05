@@ -143,37 +143,36 @@ class Command(BaseCommand):
         # For each board that is ready and belongs to this member, fetch it
         boards = list(member.created_boards.filter(has_to_be_fetched=True, is_archived=False))
         failed_boards = []
-        while len(boards) > 0:
+        while boards:
             board = boards.pop()
             # Shouldn't be needed because we are getting the boards by creator, but in case
             # we add this check in case we change the method of getting boards in a future
-            if board.id not in self.fetched_boards:
-                if board.is_ready():
-                    try:
-                        self.stdout.write(self.style.SUCCESS(u"Board {0} is ready".format(board.name)))
-                        self.fetch_board(member, board)
-                        self.stdout.write(self.style.SUCCESS(u"Board {0} fetched successfully".format(board.name)))
-                        # Mark this board as fetched
-                        self.fetched_boards[board.id] = True
-                    except Exception as e:
-                        import traceback
-                        traceback.print_exc()
-                        error_message = u"Error when fetching boards. Board {0} fetch failed. Exception {1}.".format(
-                            board.name, e
-                        )
-                        initializer = Initializer(member, debug=False)
-                        initializer.init(board.uuid)
-                        # Warn the administrators messaging them the traceback and show the error on stdout
-                        warn_administrators(subject=error_message, message=traceback.format_exc())
-                        self.stdout.write(self.style.ERROR(error_message))
-                        # Re-add the failed board to the last of the board list
-                        failed_boards.append(board)
-                else:
-                    self.stdout.write(self.style.ERROR(u"Board {0} is not ready".format(board.name)))
-            else:
+            if board.id in self.fetched_boards:
                 self.stdout.write(self.style.WARNING(u"Board {0} has already been fetched".format(board.name)))
 
-        if len(failed_boards) > 0:
+            elif board.is_ready():
+                try:
+                    self.stdout.write(self.style.SUCCESS(u"Board {0} is ready".format(board.name)))
+                    self.fetch_board(member, board)
+                    self.stdout.write(self.style.SUCCESS(u"Board {0} fetched successfully".format(board.name)))
+                    # Mark this board as fetched
+                    self.fetched_boards[board.id] = True
+                except Exception as e:
+                    import traceback
+                    traceback.print_exc()
+                    error_message = u"Error when fetching boards. Board {0} fetch failed. Exception {1}.".format(
+                        board.name, e
+                    )
+                    initializer = Initializer(member, debug=False)
+                    initializer.init(board.uuid)
+                    # Warn the administrators messaging them the traceback and show the error on stdout
+                    warn_administrators(subject=error_message, message=traceback.format_exc())
+                    self.stdout.write(self.style.ERROR(error_message))
+                    # Re-add the failed board to the last of the board list
+                    failed_boards.append(board)
+            else:
+                self.stdout.write(self.style.ERROR(u"Board {0} is not ready".format(board.name)))
+        if failed_boards:
             self.stdout.write(self.style.ERROR(u"There are {0} boards whose fetch failed".format(len(failed_boards))))
             for failed_board in failed_boards:
                 self.stdout.write(
@@ -188,10 +187,9 @@ class Command(BaseCommand):
                 board_fetcher = BoardFetcher(board)
                 board_fetcher.fetch(debug=False)
             except Exception as e:
-                if num_retries < 2:
-                    # Initialize board if needed
-                    initializer = Initializer(member, debug=False)
-                    initializer.init(board.uuid)
-                else:
+                if num_retries >= 2:
                     raise e
+                # Initialize board if needed
+                initializer = Initializer(member, debug=False)
+                initializer.init(board.uuid)
 

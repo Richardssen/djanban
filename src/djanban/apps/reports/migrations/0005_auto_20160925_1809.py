@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 from django.db import migrations
 
 
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -15,10 +17,17 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='cardmovement',
-            options={'verbose_name': 'Card movement', 'verbose_name_plural': 'Card movements'},
+            options={
+                'verbose_name': 'Card movement',
+                'verbose_name_plural': 'Card movements',
+            },
         ),
         migrations.AlterIndexTogether(
             name='cardmovement',
-            index_together=set([('board', 'card', 'datetime'), ('board', 'type', 'source_list', 'destination_list'), ('board', 'destination_list', 'datetime')]),
+            index_together={
+                ('board', 'card', 'datetime'),
+                ('board', 'type', 'source_list', 'destination_list'),
+                ('board', 'destination_list', 'datetime'),
+            },
         ),
     ]

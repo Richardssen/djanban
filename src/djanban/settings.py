@@ -13,7 +13,7 @@ import sys
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR+"/djanban/media"
+MEDIA_ROOT = f"{BASE_DIR}/djanban/media"
 
 #
 settings_local_module = 'djanban.settings_local'
@@ -58,10 +58,7 @@ DOMAIN = settings_local.DOMAIN
 PORT = settings_local.PORT
 ALLOWED_HOSTS = settings_local.ALLOWED_HOSTS
 
-ADMINS = []
-if hasattr(settings_local, "ADMINS"):
-    ADMINS = settings_local.ADMINS
-
+ADMINS = settings_local.ADMINS if hasattr(settings_local, "ADMINS") else []
 SITE_ID = 1
 
 # Administrator group
@@ -139,7 +136,7 @@ ROOT_URLCONF = 'djanban.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR+"/djanban/templates"],
+        'DIRS': [f"{BASE_DIR}/djanban/templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -152,8 +149,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
             ],
         },
-    },
+    }
 ]
+
 
 WSGI_APPLICATION = 'wsgi.wsgi.application'
 

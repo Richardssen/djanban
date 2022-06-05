@@ -12,8 +12,7 @@ def get_iso_week_of_year(date=None):
     if date is None:
         date = timezone.now().date()
     iso_calendar_date = date.isocalendar()
-    week_of_year = iso_calendar_date[1]
-    return week_of_year
+    return iso_calendar_date[1]
 
 
 def get_week_of_year(date=None):
@@ -29,8 +28,10 @@ def get_weeks_of_year_since_one_year_ago(date=None):
         date = now.date()
     week_of_year = get_week_of_year(date)
     weeks_of_year = [week_of_year]
-    for i in range(1, 53):
-        weeks_of_year.append(get_week_of_year(date - timedelta(days=7) * i))
+    weeks_of_year.extend(
+        get_week_of_year(date - timedelta(days=7) * i) for i in range(1, 53)
+    )
+
     return weeks_of_year
 
 

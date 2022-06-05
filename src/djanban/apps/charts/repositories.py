@@ -50,9 +50,7 @@ def _number_of_code_errors_by_commit(board, repository=None, language="python", 
         chart_title = u"Errors in {0} code per LOC by commit in project {1}{2}{3}".format(language, board.name, repository_text, timezone.now())
 
     def formatter(x):
-        if per_loc:
-            return '{0:.2f}'.format(x)
-        return "{0}".format(x)
+        return '{0:.2f}'.format(x) if per_loc else "{0}".format(x)
 
     chart = pygal.Line(title=chart_title, legend_at_bottom=True, print_values=True,
                        print_zeroes=False, value_formatter=formatter,
@@ -121,9 +119,7 @@ def _number_of_code_errors_by_month(board, repository=None, language="python", p
         chart_title = u"Errors in {0} code per LOC by month in project {1}{2}{3}".format(language, board.name, repository_text, timezone.now())
 
     def formatter(x):
-        if per_loc:
-            return '{0:.2f}'.format(x)
-        return "{0}".format(x)
+        return '{0:.2f}'.format(x) if per_loc else "{0}".format(x)
 
     chart = pygal.Line(title=chart_title, legend_at_bottom=True, print_values=True,
                        print_zeroes=False, value_formatter=formatter,

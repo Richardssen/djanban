@@ -17,6 +17,5 @@ def localize_if_needed(unlocalized_datetime):
 # Assumes that the datetime is unlocalized
 def localize(unlocalized_datetime):
     local_timezone = pytz.timezone(settings.TIME_ZONE)
-    localized_datetime = local_timezone.localize(unlocalized_datetime)
-    return localized_datetime
+    return local_timezone.localize(unlocalized_datetime)
 

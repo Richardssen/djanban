@@ -29,8 +29,7 @@ class RecurrentCardFilterForm(forms.Form):
         self.fields["is_active"].choices = [("", "Indiferent"),("Yes", "Yes"),("No", "No")]
 
     def clean(self):
-        cleaned_data = super(RecurrentCardFilterForm, self).clean()
-        return cleaned_data
+        return super(RecurrentCardFilterForm, self).clean()
 
     def get_recurrent_cards(self):
         # Filtering by board or label
@@ -41,7 +40,7 @@ class RecurrentCardFilterForm(forms.Form):
             recurrent_cards = recurrent_cards.filter(labels=label)
 
         # Filtering paid work hours packages
-        if self.cleaned_data.get("is_active") == "Yes" or self.cleaned_data.get("is_active") == "No":
+        if self.cleaned_data.get("is_active") in ["Yes", "No"]:
             recurrent_cards = recurrent_cards.filter(is_paid=(self.cleaned_data.get("is_active") == "Yes"))
 
         return recurrent_cards
@@ -86,10 +85,13 @@ class WeeklyRecurrentCardForm(forms.ModelForm):
 
     def save(self, commit=True):
         super(WeeklyRecurrentCardForm, self).save(commit)
-        if commit:
-            # Add the creator as member by default
-            if not self.instance.members.filter(id=self.instance.creator.id).exists():
-                self.instance.members.add(self.instance.creator)
+        if (
+            commit
+            and not self.instance.members.filter(
+                id=self.instance.creator.id
+            ).exists()
+        ):
+            self.instance.members.add(self.instance.creator)
 
 
 # Delete recurrent card

@@ -36,7 +36,7 @@ class Command(daily_report.Command):
 
         # If this day is holiday, don't send anything
         iso_weekday = date.isoweekday()
-        if iso_weekday == 6 or iso_weekday == 7:
+        if iso_weekday in [6, 7]:
             self.stdout.write(
                 self.style.SUCCESS(
                     u"Daily development reports for day {0} are not sent because that day is holiday".format(

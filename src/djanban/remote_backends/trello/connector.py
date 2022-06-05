@@ -24,34 +24,30 @@ class TrelloConnector(object):
 
     # Get a trello client for this user
     def _get_trello_client(self):
-        client = TrelloClient(
+        return TrelloClient(
             api_key=self.trello_member_profile.api_key,
             api_secret=self.trello_member_profile.api_secret,
             token=self.trello_member_profile.token,
-            token_secret=self.trello_member_profile.token_secret
+            token_secret=self.trello_member_profile.token_secret,
         )
-        return client
 
     def reconnect(self):
         self.trello_client = self._get_trello_client()
 
     # Return the trello board of a given Board object.
     def get_trello_board(self, board):
-        trello_board = self.trello_client.get_board(board.uuid)
-        return trello_board
+        return self.trello_client.get_board(board.uuid)
 
     # Return a trello list
     def get_trello_list(self, list_):
         trello_board = self.get_trello_board(list_.board)
-        trello_list = TrelloList(trello_board, list_.uuid, name=list_.name)
-        return trello_list
+        return TrelloList(trello_board, list_.uuid, name=list_.name)
 
     # Return the trello card of a given Card object.
     # The member is used to establish the connection.
     def get_trello_card(self, card):
         trello_board = self.get_trello_board(card.board)
-        trello_card = TrelloCard(parent=trello_board, card_id=card.uuid)
-        return trello_card
+        return TrelloCard(parent=trello_board, card_id=card.uuid)
 
     # Board operations
 
