@@ -84,10 +84,11 @@ class WorkHoursPackage(models.Model):
 
     @property
     def full_name(self):
-        if self.start_work_date and self.end_work_date:
-            return "{0} {1}-{2}".format(self.name, self.start_work_date, self.end_work_date)
-        elif self.start_work_date:
-            return "{0} {1}".format(self.name, self.start_work_date)
+        if self.start_work_date:
+            if self.end_work_date:
+                return "{0} {1}-{2}".format(self.name, self.start_work_date, self.end_work_date)
+            else:
+                return "{0} {1}".format(self.name, self.start_work_date)
         return "{0}".format(self.name)
 
     def get_spent_time(self):
@@ -123,14 +124,14 @@ class WorkHoursPackage(models.Model):
         elif self.label:
             daily_spent_time_filter["board"] = self.label.board
             daily_spent_time_filter["card__labels"] = self.label
-        daily_spent_times = DailySpentTime.objects.filter(**daily_spent_time_filter)
-        return daily_spent_times
+        return DailySpentTime.objects.filter(**daily_spent_time_filter)
 
     # Get the date of the last spent time measurement
     @property
     def completion_date(self):
-        last_daily_spent_time_in_this_work_package = self.last_daily_spent_time
-        if last_daily_spent_time_in_this_work_package:
+        if (
+            last_daily_spent_time_in_this_work_package := self.last_daily_spent_time
+        ):
             return last_daily_spent_time_in_this_work_package.date
         return None
 
@@ -151,13 +152,13 @@ class WorkHoursPackage(models.Model):
     # Mark this work hours package completion notification as sent to its members
     def mark_completion_notification_as_sent(self, percentage):
         now = timezone.now()
-        if percentage == "100%" or percentage == 100:
+        if percentage in ["100%", 100]:
             self.completion_notification_datetime = now
-        elif percentage == "90%" or percentage == 90:
+        elif percentage in ["90%", 90]:
             self.ninety_percent_completion_notification_datetime = now
-        elif percentage == "80%" or percentage == 80:
+        elif percentage in ["80%", 80]:
             self.eighty_percent_completion_notification_datetime = now
-        elif percentage == "50%" or percentage == 50:
+        elif percentage in ["50%", 50]:
             self.half_completion_notification_datetime = now
         else:
             raise ValueError(u"Invalid percentage value")

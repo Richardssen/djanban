@@ -13,6 +13,6 @@ def assert_user_can_edit_member(user, member):
     if user_is_member(user):
         current_member = user.member
         # An user can edit another one if he/she is his/her creator or if is him/herself
-        return current_member.id == member.creator_id or current_member.id == member.id
+        return current_member.id in [member.creator_id, member.id]
 
     raise AssertionError("You do not have permissions to edit this users")

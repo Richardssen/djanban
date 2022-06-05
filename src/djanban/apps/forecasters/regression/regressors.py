@@ -35,10 +35,7 @@ class Regressor(object):
         self.cards = cards\
             .filter(is_closed=False, spent_time__gt=0, list__type="done")
         self.forecaster_name = forecaster_name
-        if members:
-            self.members = members
-        else:
-            self.members = []
+        self.members = members or []
         if not self.cards.exists():
             raise AssertionError(u"There are no cards")
 
@@ -98,8 +95,7 @@ class Regressor(object):
 # that are passed as parameter to this class using Ordinary Least Squares method
 class OLS(Regressor):
     def get_formula(self):
-        formula = super(OLS, self).get_formula()
-        return formula
+        return super(OLS, self).get_formula()
 
     def fit(self, df, formula):
         return smf.ols(formula=formula, data=df).fit()

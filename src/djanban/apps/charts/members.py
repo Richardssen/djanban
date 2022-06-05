@@ -20,7 +20,7 @@ from djanban.utils.week import number_of_weeks_of_year, get_iso_week_of_year
 
 # Show a chart with the task movements (backward or forward) by member
 def task_movements_by_member(request, movement_type="forward", board=None):
-    if movement_type != "forward" and movement_type != "backward":
+    if movement_type not in ["forward", "backward"]:
         raise ValueError("{0} is not recognized as a valid movement type".format(movement_type))
 
     # Caching
@@ -92,10 +92,7 @@ def spent_time_by_week(current_user, week_of_year=None, board=None):
 
     team_spent_time = 0
 
-    if board is None:
-        boards = get_user_boards(current_user)
-    else:
-        boards = [board]
+    boards = get_user_boards(current_user) if board is None else [board]
     members = Member.objects.filter(boards__in=boards, is_developer=True).distinct().order_by("id")
     for member in members:
         member_name = member.external_username
@@ -136,11 +133,7 @@ def avg_spent_time_by_weekday(current_user, board=None):
 
     team_spent_time = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0}
 
-    if board is None:
-        boards = get_user_boards(current_user)
-    else:
-        boards = [board]
-
+    boards = get_user_boards(current_user) if board is None else [board]
     spent_time_chart.x_labels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
     members = Member.objects.filter(boards__in=boards, is_developer=True).distinct().order_by("id")
@@ -224,8 +217,9 @@ def spent_time_by_week_evolution(board, show_interruptions=False):
         week_i_start_date = Week(year_i, week_i).monday()
         week_i_end_date = Week(year_i, week_i).sunday()
 
-        there_is_data = board.daily_spent_times.filter(date__year=year_i, week_of_year=week_i).exists()
-        if there_is_data:
+        if there_is_data := board.daily_spent_times.filter(
+            date__year=year_i, week_of_year=week_i
+        ).exists():
             x_labels.append(u"{0}W{1}".format(year_i, week_i))
 
             team_spent_time = 0
@@ -302,11 +296,7 @@ def number_of_comments(current_user, board=None, card=None):
     if not card_comments.exists():
         return number_of_comments_chart.render_django_response()
 
-    if board:
-        boards = [board]
-    else:
-        boards = get_user_boards(current_user)
-
+    boards = [board] if board else get_user_boards(current_user)
     members = Member.objects.filter(boards__in=boards).distinct().order_by("id")
 
     total_number_of_comments = 0
@@ -351,11 +341,7 @@ def number_of_cards(current_user, board=None):
     if not cards.exists():
         return number_of_cards_chart.render_django_response()
 
-    if board:
-        boards = [board]
-    else:
-        boards = get_user_boards(current_user)
-
+    boards = [board] if board else get_user_boards(current_user)
     members = Member.objects.filter(boards__in=boards).distinct().order_by("id")
 
     total_number_of_cards = 0
@@ -385,11 +371,7 @@ def spent_time(current_user, board=None):
         chart_title += u" for board {0}".format(board.name)
         chart_title += u" (fetched on {0})".format(board.get_human_fetch_datetime())
 
-    if board:
-        boards = [board]
-    else:
-        boards = get_user_boards(current_user)
-
+    boards = [board] if board else get_user_boards(current_user)
     spent_time_chart = pygal.Bar(
         title=chart_title, legend_at_bottom=True, print_values=False, print_zeroes=False, fill=False,
         margin=0, human_readable=True

@@ -71,7 +71,7 @@ def sync(request):
         try:
             initializer = Initializer(member)
             initializer.init()
-        except (SSLError, HTTPError) as e:
+        except HTTPError as e:
             replacements = {
                 "member": member,
                 "error": "Connection error when initializing member: {0}".format(e)
@@ -128,9 +128,7 @@ def edit_label(request, board_id, label_id):
 # View boards of current user
 @login_required
 def view_list(request):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
+    member = request.user.member if user_is_member(request.user) else None
     boards = get_user_boards(request.user).order_by("name")
     archived_boards = get_user_boards(request.user, is_archived=True).order_by("name")
     replacements = {"member": member, "boards": boards, "archived_boards": archived_boards, "user": request.user}
@@ -140,9 +138,7 @@ def view_list(request):
 # View archived boards
 @member_required
 def view_archived_boards(request):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
+    member = request.user.member if user_is_member(request.user) else None
     boards = get_user_boards(request.user, is_archived=True).order_by("name")
     replacements = {"member": member, "boards": boards}
     return render(request, "boards/archived_list.html", replacements)
@@ -151,9 +147,7 @@ def view_archived_boards(request):
 # View a board stats panorama
 @login_required
 def view_board_panorama(request):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
+    member = request.user.member if user_is_member(request.user) else None
     replacements = {"member": member, "user": request.user}
     return render(request, "boards/panorama.html", replacements)
 
@@ -173,6 +167,9 @@ def view_gantt_chart(request, board_id):
     board_cards = board.cards.filter(list__type__in=List.STARTED_CARD_LIST_TYPES)
 
     cards = []
+    # Color of task
+    task_color = "blue"
+
     for board_card in board_cards:
 
         # Task start
@@ -187,9 +184,6 @@ def view_gantt_chart(request, board_id):
             end_date = board_card.end_datetime
         else:
             end_date = start_date + timedelta(days=1)
-
-        # Color of task
-        task_color = "blue"
 
         # Percentage of completion of the task
         if board_card.list.type == "development":
@@ -252,10 +246,7 @@ def view_gantt_chart(request, board_id):
 def view_taskboard(request, board_id, path=""):
 
     board = get_user_board_or_404(request.user, board_id)
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
-
+    member = request.user.member if user_is_member(request.user) else None
     replacements = {
         "member": member,
         "board": board,
@@ -292,10 +283,7 @@ def view(request, board_id):
 
     # Requirements
     requirements = board.requirements.all().order_by("-value")
-    requirement = None
-    if requirements.exists():
-        requirement = requirements[0]
-
+    requirement = requirements[0] if requirements.exists() else None
     # Replacements in the template
     replacements = {
         "url_prefix": "http://{0}".format(settings.DOMAIN),
@@ -318,9 +306,7 @@ def public_view(request, board_public_access_code):
     lists = board.lists.exclude(type="ignored").order_by("position")
     # Requirements
     requirements = board.requirements.all().order_by("-value")
-    requirement = None
-    if requirements.exists():
-        requirement = requirements[0]
+    requirement = requirements[0] if requirements.exists() else None
     replacements = {
         "requirement": requirement,
         "requirements": requirements,
@@ -392,10 +378,7 @@ def view_identicon(request, board_id, width=40, height=40):
 # View lists of a board
 @login_required
 def view_lists(request, board_id):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
-
+    member = request.user.member if user_is_member(request.user) else None
     board = get_user_board_or_404(request.user, board_id)
     lists = board.lists.all().order_by("position")
 
@@ -406,9 +389,7 @@ def view_lists(request, board_id):
 # Create a new list
 @member_required
 def new_list(request, board_id):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
+    member = request.user.member if user_is_member(request.user) else None
     board = get_user_board_or_404(request.user, board_id)
 
     list_ = List(board=board)
@@ -621,10 +602,7 @@ def fetch(request, board_id):
 @login_required
 def view_workflow_card_report(request, board_id, workflow_id):
 
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
-
+    member = request.user.member if user_is_member(request.user) else None
     board = get_user_board_or_404(request.user, board_id)
 
     workflow = board.workflows.get(id=workflow_id)
@@ -644,10 +622,7 @@ def view_workflow_card_report(request, board_id, workflow_id):
 # View label report
 @login_required
 def view_label_report(request, board_id):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
-
+    member = request.user.member if user_is_member(request.user) else None
     board = get_user_board_or_404(request.user, board_id)
 
     labels = board.labels.exclude(name="")
@@ -658,10 +633,7 @@ def view_label_report(request, board_id):
 # View member report
 @login_required
 def view_member_report(request, board_id):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
-
+    member = request.user.member if user_is_member(request.user) else None
     board = get_user_board_or_404(request.user, board_id)
 
     week_of_year = get_week_of_year()

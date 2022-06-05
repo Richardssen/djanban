@@ -79,11 +79,10 @@ class NativeConnector(object):
         cards = card.list.active_cards.all()
         if not cards.exists():
             position = 100000
-        else:
-            if position == "top":
-                position = cards.order_by("position")[0].position - 1000
-            elif position == "bottom":
-                position = cards.order_by("-position")[0].position + 1000
+        elif position == "top":
+            position = cards.order_by("position")[0].position - 1000
+        elif position == "bottom":
+            position = cards.order_by("-position")[0].position + 1000
 
         card.position = position
         card.creation_datetime = timezone.now()

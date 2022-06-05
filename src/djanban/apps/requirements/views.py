@@ -18,10 +18,7 @@ from djanban.apps.requirements.models import Requirement
 # List of requirements
 @login_required
 def view_list(request, board_id):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
-
+    member = request.user.member if user_is_member(request.user) else None
     board = get_user_board_or_404(request.user, board_id)
     requirements = board.requirements.all().order_by("value")
     replacements = {
@@ -36,10 +33,7 @@ def view_list(request, board_id):
 @login_required
 def view(request, board_id, requirement_code):
 
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
-
+    member = request.user.member if user_is_member(request.user) else None
     board = get_user_board_or_404(request.user, board_id)
 
     requirement = get_object_or_404(Requirement, code=requirement_code, board=board)

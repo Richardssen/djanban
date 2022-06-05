@@ -6,6 +6,8 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -17,13 +19,61 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='CardAttachment',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('uuid', models.CharField(max_length=128, unique=True, verbose_name='External id of this attachment')),
-                ('file', models.FileField(upload_to=b'', verbose_name='File content')),
-                ('is_cover', models.BooleanField(default=True, help_text='Is this file the cover of the card? If it is the cover, it will be used as a the header image of the card.', verbose_name='Is this file the cover of the card?')),
-                ('creation_datetime', models.DateTimeField(verbose_name='Creation datetime of the comment')),
-                ('card', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='attachments', to='boards.Card', verbose_name='Card this attachment belongs to')),
-                ('uploader', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='attachments', to='members.Member', verbose_name='Member uploader of this attachment')),
+                (
+                    'id',
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name='ID',
+                    ),
+                ),
+                (
+                    'uuid',
+                    models.CharField(
+                        max_length=128,
+                        unique=True,
+                        verbose_name='External id of this attachment',
+                    ),
+                ),
+                (
+                    'file',
+                    models.FileField(
+                        upload_to=b'', verbose_name='File content'
+                    ),
+                ),
+                (
+                    'is_cover',
+                    models.BooleanField(
+                        default=True,
+                        help_text='Is this file the cover of the card? If it is the cover, it will be used as a the header image of the card.',
+                        verbose_name='Is this file the cover of the card?',
+                    ),
+                ),
+                (
+                    'creation_datetime',
+                    models.DateTimeField(
+                        verbose_name='Creation datetime of the comment'
+                    ),
+                ),
+                (
+                    'card',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='attachments',
+                        to='boards.Card',
+                        verbose_name='Card this attachment belongs to',
+                    ),
+                ),
+                (
+                    'uploader',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='attachments',
+                        to='members.Member',
+                        verbose_name='Member uploader of this attachment',
+                    ),
+                ),
             ],
             options={
                 'verbose_name': 'Card attachment',
@@ -32,6 +82,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterIndexTogether(
             name='cardattachment',
-            index_together=set([('uploader', 'card', 'creation_datetime'), ('card', 'creation_datetime', 'uploader'), ('card', 'uploader', 'creation_datetime'), ('creation_datetime', 'card', 'uploader')]),
+            index_together={
+                ('uploader', 'card', 'creation_datetime'),
+                ('card', 'creation_datetime', 'uploader'),
+                ('card', 'uploader', 'creation_datetime'),
+                ('creation_datetime', 'card', 'uploader'),
+            },
         ),
     ]

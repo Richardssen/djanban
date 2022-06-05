@@ -85,8 +85,7 @@ def noise_level_per_hour(current_user):
 
     noise_values = {"avg": [], "min": [], "max": []}
     hours = []
-    hour_i = 0
-    while hour_i < 24:
+    for hour_i in range(24):
         noise_level_in_hour_i = noise_measurements.\
             filter(datetime__hour=hour_i).\
             aggregate(avg=Avg("noise_level"), max=Max("noise_level"), min=Min("noise_level"))
@@ -97,8 +96,6 @@ def noise_level_per_hour(current_user):
             noise_values["max"].append(noise_level_in_hour_i["max"])
 
             hours.append(hour_i)
-        hour_i += 1
-
     noise_chart.add("Avg noise level", noise_values["avg"])
     noise_chart.add("Min noise level", noise_values["min"])
     noise_chart.add("Max noise level", noise_values["max"])
@@ -129,8 +126,7 @@ def noise_level_per_weekday(current_user):
     noise_values = {"avg": [], "min": [], "max": []}
     weekday_dict = {1: "Sunday", 2: "Monday", 3: "Tuesday", 4: "Wednesday", 5: "Thursday", 6: "Friday", 7: "Saturday"}
     weekdays = []
-    weekday_i = 1
-    while weekday_i < 7:
+    for weekday_i in range(1, 7):
         noise_level_in_hour_i = noise_measurements. \
             filter(datetime__week_day=weekday_i). \
             aggregate(avg=Avg("noise_level"), max=Max("noise_level"), min=Min("noise_level"))
@@ -141,8 +137,6 @@ def noise_level_per_weekday(current_user):
             noise_values["max"].append(noise_level_in_hour_i["max"])
 
             weekdays.append(weekday_dict[weekday_i])
-        weekday_i += 1
-
     noise_chart.add("Avg noise level", noise_values["avg"])
     noise_chart.add("Min noise level", noise_values["min"])
     noise_chart.add("Max noise level", noise_values["max"])
@@ -156,11 +150,12 @@ def noise_level_per_weekday(current_user):
 def subjective_noise_level(current_user, month=None, year=None):
 
     # Caching
-    chart_uuid = "noise_measurements.subjective_noise_level-{0}-{1}-{2}".format(
-        current_user.id,
-        month if month else "None",
-        year if year else "None"
+    chart_uuid = (
+        "noise_measurements.subjective_noise_level-{0}-{1}-{2}".format(
+            current_user.id, month or "None", year or "None"
+        )
     )
+
     chart = CachedChart.get(board=None, uuid=chart_uuid)
     if chart:
         return chart

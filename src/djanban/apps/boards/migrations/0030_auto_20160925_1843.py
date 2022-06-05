@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 from django.db import migrations
 
 
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -14,6 +16,10 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterIndexTogether(
             name='card',
-            index_together=set([('board', 'creation_datetime'), ('board', 'creation_datetime', 'list'), ('board', 'list', 'position')]),
-        ),
+            index_together={
+                ('board', 'creation_datetime'),
+                ('board', 'creation_datetime', 'list'),
+                ('board', 'list', 'position'),
+            },
+        )
     ]

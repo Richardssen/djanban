@@ -46,24 +46,21 @@ class Command(BaseCommand):
 
         with transaction.atomic():
             for recurrent_card in recurrent_cards:
-                # Check if has already created a card today
-                has_created_a_card_today = recurrent_card.has_created_a_card_today
-                # In case a card has not been already created today for this recurrent card,
-                # create it (also in its backend)
-                if not has_created_a_card_today:
+                if (
+                    has_created_a_card_today := recurrent_card.has_created_a_card_today
+                ):
+                    self.stdout.write(
+                        self.style.WARNING(
+                            u"card {0} already created today".format(recurrent_card.name))
+                    )
+
+                else:
                     card = recurrent_card.create_card()
                     num_created_cards += 1
                     self.stdout.write(
                         self.style.SUCCESS(
                             u"{0} successfully created".format(card.name))
                     )
-                # In case a card has been already created for this recurrent card, show a warning
-                else:
-                    self.stdout.write(
-                        self.style.WARNING(
-                            u"card {0} already created today".format(recurrent_card.name))
-                    )
-
         # If there has been at least one creation of card, show a message
         if num_created_cards > 0:
             self.stdout.write(

@@ -50,9 +50,7 @@ def edit(request, work_hours_package_id):
 
 @login_required
 def notify_completions(request):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
+    member = request.user.member if user_is_member(request.user) else None
     if request.method == "POST":
         form = NotificationCompletionSenderForm(request.POST, member=member)
 
@@ -94,11 +92,10 @@ def view_list(request):
 
     if form and form.is_valid():
         work_hours_packages = form.get_work_hours_packages()
-    else:
-        if member:
-            work_hours_packages = member.work_hours_packages.all().order_by("start_work_date", "end_work_date", "name")
-        elif user_is_administrator(request.user):
-            work_hours_packages = WorkHoursPackage.objects.order_by("start_work_date", "end_work_date", "name")
+    elif member:
+        work_hours_packages = member.work_hours_packages.all().order_by("start_work_date", "end_work_date", "name")
+    elif user_is_administrator(request.user):
+        work_hours_packages = WorkHoursPackage.objects.order_by("start_work_date", "end_work_date", "name")
 
     replacements = {"work_hours_packages": work_hours_packages, "member": member, "form": form}
     return render(request, "work_hours_packages/list.html", replacements)

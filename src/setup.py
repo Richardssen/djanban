@@ -17,21 +17,28 @@ def tree(src):
     return [(root, map(lambda f: os.path.join(root, f), files)) for (root, dirs, files) in os.walk(os.path.normpath(src))]
 
 
-DATA_FILES = tree(current_dir+'/public')
+DATA_FILES = tree(f'{current_dir}/public')
 
 OPTIONS = {
     'argv_emulation': True,
-    'iconfile': current_dir+'/../resources/images/logos/logo.ico',
+    'iconfile': f'{current_dir}/../resources/images/logos/logo.ico',
     'packages': ['cherrypy.wsgiserver', "cherrypy.process"],
-    'includes': ['six', 'packaging', 'packaging.version', 'packaging.specifiers', 'packaging.requirements'],
+    'includes': [
+        'six',
+        'packaging',
+        'packaging.version',
+        'packaging.specifiers',
+        'packaging.requirements',
+    ],
     'plist': {
         'CFBundleIdentifier': "djanban",
         'CFBundleName': "Djanban",
         'CFBundleVersion': '1001',
         'CFBundleShortVersionString': '1.0',
-        'NSHumanReadableCopyright': 'Copyright 2016 DiegoJ.'
-    }
+        'NSHumanReadableCopyright': 'Copyright 2016 DiegoJ.',
+    },
 }
+
 
 setup(
     app=APP,

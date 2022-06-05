@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 from django.db import migrations
 
 
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -17,7 +19,6 @@ class Migration(migrations.Migration):
             options={'verbose_name': 'label', 'verbose_name_plural': 'labels'},
         ),
         migrations.AlterIndexTogether(
-            name='label',
-            index_together=set([('board', 'name', 'color')]),
+            name='label', index_together={('board', 'name', 'color')}
         ),
     ]

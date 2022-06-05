@@ -65,8 +65,7 @@ class Repository(models.Model):
     # Fetch the commit
     def fetch_commit_info(self, commit):
         derived_object = self.derived_object
-        commit_info = derived_object.fetch_commit_info(commit)
-        return commit_info
+        return derived_object.fetch_commit_info(commit)
 
     # Has this repository assessed Python code?
     @property
@@ -211,7 +210,9 @@ class GitLabRepository(Repository, GitRepository):
     project_name = models.CharField(verbose_name=u"Project name", max_length=128)
 
     def __unicode__(self):
-        return "Access token: {0}..., Username: {1} and project name: {2}".format(self.access_token[0:5], self.username, self.project_name)
+        return "Access token: {0}..., Username: {1} and project name: {2}".format(
+            self.access_token[:5], self.username, self.project_name
+        )
 
     @property
     def project_full_name(self):
@@ -228,11 +229,14 @@ class GitLabRepository(Repository, GitRepository):
     @property
     def clone_command(self):
         repository_dir = self.repository_path
-        clone_command = "git clone https://{0}:{1}@{2}/{3}/{4}.git {5}".format(
-            self.username, self.password, self.url.replace("http://", ""), self.project_userspace, self.project_name,
-            repository_dir
+        return "git clone https://{0}:{1}@{2}/{3}/{4}.git {5}".format(
+            self.username,
+            self.password,
+            self.url.replace("http://", ""),
+            self.project_userspace,
+            self.project_name,
+            repository_dir,
         )
-        return clone_command
 
     def checkout(self, commit=False):
         self._checkout(commit)

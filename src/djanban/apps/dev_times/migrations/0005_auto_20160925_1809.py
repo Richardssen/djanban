@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 from django.db import migrations
 
 
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -15,10 +17,17 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='dailyspenttime',
-            options={'verbose_name': 'Spent time', 'verbose_name_plural': 'Spent times'},
+            options={
+                'verbose_name': 'Spent time',
+                'verbose_name_plural': 'Spent times',
+            },
         ),
         migrations.AlterIndexTogether(
             name='dailyspenttime',
-            index_together=set([('date', 'week_of_year', 'board', 'spent_time'), ('board', 'date', 'week_of_year', 'spent_time'), ('date', 'week_of_year', 'spent_time')]),
+            index_together={
+                ('date', 'week_of_year', 'board', 'spent_time'),
+                ('board', 'date', 'week_of_year', 'spent_time'),
+                ('date', 'week_of_year', 'spent_time'),
+            },
         ),
     ]

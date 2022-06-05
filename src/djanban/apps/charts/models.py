@@ -33,8 +33,9 @@ class CachedChart(models.Model):
     def get(board, uuid):
         # CachedChart update can be forced passing a GET parameter that would be evaluated to True
         current_request = CrequestMiddleware.get_request()
-        force_update_param_value = current_request.GET.get(CachedChart.FORCE_UPDATE_GET_PARAM_NAME)
-        if force_update_param_value:
+        if force_update_param_value := current_request.GET.get(
+            CachedChart.FORCE_UPDATE_GET_PARAM_NAME
+        ):
             return False
 
         # Otherwise, try to get the CachedChart and if is old or it doesn't exist, return False

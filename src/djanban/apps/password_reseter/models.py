@@ -36,10 +36,11 @@ class PasswordResetRequest(models.Model):
     @staticmethod
     def user_has_a_pending_new_password_request(user):
         now = timezone.now()
-        exitst_other_requests = user.password_reset_requests.filter(
-            status="pending", completion_datetime__isnull=True, limit_datetime__gt=now
+        return user.password_reset_requests.filter(
+            status="pending",
+            completion_datetime__isnull=True,
+            limit_datetime__gt=now,
         ).exists()
-        return exitst_other_requests
 
     @staticmethod
     def request_new_password(user, send_email=True):

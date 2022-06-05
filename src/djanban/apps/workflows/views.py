@@ -18,9 +18,7 @@ from djanban.apps.workflows.models import Workflow
 # View list of workflows of a board
 @login_required
 def view_list(request, board_id):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
+    member = request.user.member if user_is_member(request.user) else None
     board = get_user_boards(request.user).get(id=board_id)
     workflows = Workflow.objects.all().order_by("name")
     # Ordered workflow lists

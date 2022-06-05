@@ -21,8 +21,5 @@ def get_members(request):
 
     serializer = Serializer()
 
-    response_json = []
-    for member in members:
-        response_json.append(serializer.serialize_member(member))
-
+    response_json = [serializer.serialize_member(member) for member in members]
     return JsonResponse(response_json, safe=False)

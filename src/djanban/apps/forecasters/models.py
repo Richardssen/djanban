@@ -102,8 +102,7 @@ class Forecaster(models.Model):
         if not hasattr(self, "_regression_results"):
             self._regression_results = self.get_regression_results()
         prediction = self._regression_results.predict([self._get_card_data(card)])
-        estimated_spent_time = float(prediction)
-        return estimated_spent_time
+        return float(prediction)
 
     # Make a forecast of a card
     # Returns a Forecast object with the estimated spent time of this card according to this forecaster's model
@@ -137,12 +136,11 @@ class Forecaster(models.Model):
         user = member.user
         boards = get_user_boards(user)
         teammates = Member.get_user_team_members(user)
-        forecasters = Forecaster.objects.filter(
-            Q(last_updater=member) |
-            Q(board__in=boards) |
-            Q(member__in=list(teammates)+[member])
+        return Forecaster.objects.filter(
+            Q(last_updater=member)
+            | Q(board__in=boards)
+            | Q(member__in=list(teammates) + [member])
         )
-        return forecasters
 
     # Serialize card data
     def _get_card_data(self, card):

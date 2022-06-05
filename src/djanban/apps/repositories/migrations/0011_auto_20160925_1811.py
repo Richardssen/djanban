@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 from django.db import migrations
 
 
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -15,6 +17,10 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterIndexTogether(
             name='commit',
-            index_together=set([('board', 'repository', 'commit'), ('board', 'repository', 'creation_datetime', 'commit'), ('board', 'repository', 'has_been_assessed')]),
-        ),
+            index_together={
+                ('board', 'repository', 'commit'),
+                ('board', 'repository', 'creation_datetime', 'commit'),
+                ('board', 'repository', 'has_been_assessed'),
+            },
+        )
     ]

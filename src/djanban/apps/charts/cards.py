@@ -180,14 +180,10 @@ def _avg_metric_time_by_month(request, board=None, metric="lead"):
                     return card_.cycle_time
             elif metric == "spent_time":
                 def card_metric(card_):
-                    if card_.spent_time is None:
-                        return 0
-                    return card_.spent_time
+                    return 0 if card_.spent_time is None else card_.spent_time
             elif metric == "estimated_time":
                 def card_metric(card_):
-                    if card_.estimated_time is None:
-                        return 0
-                    return card_.estimated_time
+                    return 0 if card_.estimated_time is None else card_.estimated_time
 
             else:
                 raise ValueError("The metric must be 'lead' or 'cycle'")
@@ -285,8 +281,11 @@ def absolute_flow_diagram(board, day_step=1):
     if chart:
         return chart
 
-    chart_title = u"Flow diagram as of {0}".format(timezone.now())
-    chart_title += u" for board {0} (fetched on {1})".format(board.name, board.get_human_fetch_datetime())
+    chart_title = u"Flow diagram as of {0}".format(
+        timezone.now()
+    ) + u" for board {0} (fetched on {1})".format(
+        board.name, board.get_human_fetch_datetime()
+    )
 
     cumulative_chart = pygal.Line(title=chart_title, legend_at_bottom=True, print_values=False,
                                   print_zeroes=False, fill=False,
@@ -352,8 +351,11 @@ def cumulative_flow_diagram(board, day_step=1):
     if chart:
         return chart
 
-    chart_title = u"Cumulative flow diagram as of {0}".format(timezone.now())
-    chart_title += u" for board {0} (fetched on {1})".format(board.name, board.get_human_fetch_datetime())
+    chart_title = u"Cumulative flow diagram as of {0}".format(
+        timezone.now()
+    ) + u" for board {0} (fetched on {1})".format(
+        board.name, board.get_human_fetch_datetime()
+    )
 
     cumulative_chart = pygal.Line(title=chart_title, legend_at_bottom=True, print_values=False,
                                   print_zeroes=False, fill=True,
@@ -436,11 +438,7 @@ def cumulative_list_type_evolution(current_user, board=None, day_step=1):
                                   show_minor_x_labels=False,
                                   human_readable=True, x_label_rotation=65)
 
-    if board:
-        boards = [board]
-    else:
-        boards = get_user_boards(current_user)
-
+    boards = [board] if board else get_user_boards(current_user)
     if not Card.objects.filter(board__in=boards, is_closed=False).exists():
         cumulative_chart = pygal.Line(title=chart_title)
         return cumulative_chart.render_django_response()
@@ -472,7 +470,7 @@ def cumulative_list_type_evolution(current_user, board=None, day_step=1):
         num_total_cards = 0
         # For each list type, you have to get the number of present cards in that date and the number of cards
         # that reached that list in that time or before that
-        for list_type_index in range(0, num_list_types):
+        for list_type_index in range(num_list_types):
             list_type = List.LIST_TYPES[list_type_index]
 
             # Number of cards that were created in this list before the date
@@ -522,11 +520,7 @@ def cumulative_card_evolution(current_user, board=None, day_step=1):
     if chart:
         return chart
 
-    if board:
-        boards = [board]
-    else:
-        boards = get_user_boards(current_user)
-
+    boards = [board] if board else get_user_boards(current_user)
     chart_title = u"Number of created cards vs completed cards as of {0}".format(timezone.now())
     if board:
         chart_title += u" for board {0} (fetched on {1})".format(board.name, board.get_human_fetch_datetime())
@@ -801,11 +795,7 @@ def completion_histogram(current_user, board=None, time_metric="lead_time", unit
         human_readable=True, x_label_rotation=70, stroke=False,
         x_title=units.capitalize(), y_title="Number of cards completed")
 
-    if board:
-        boards = [board]
-    else:
-        boards = get_user_boards(current_user)
-
+    boards = [board] if board else get_user_boards(current_user)
     cards = Card.objects.filter(board__in=boards, list__type="done")
 
     max_time = cards.exclude(is_closed=True).aggregate(max_time=Max(time_metric))["max_time"]

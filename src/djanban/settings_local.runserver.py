@@ -19,10 +19,7 @@ ADMINS = (
 # Set to your domain
 DOMAIN = "localhost"
 ALLOWED_HOSTS = [DOMAIN]
-PORT = "80"
-if DEBUG is True and DOMAIN == "localhost":
-    PORT = "8000"
-
+PORT = "8000" if DEBUG and DOMAIN == "localhost" else "80"
 # Configuration for tests with SQLite
 DATABASES = {
     'default': {

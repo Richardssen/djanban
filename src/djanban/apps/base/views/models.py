@@ -18,7 +18,7 @@ def new(request, instance, form_class, template_path, ok_url, extra_form_paramet
         form = form_class(instance=instance, **extra_form_parameters)
 
     replacements = {"form": form, "instance": instance}
-    replacements.update(extra_form_parameters)
+    replacements |= extra_form_parameters
     return render(request, template_path, replacements)
 
 
@@ -37,7 +37,7 @@ def edit(request, instance, form_class, template_path, ok_url, extra_form_parame
         form = form_class(instance=instance, **extra_form_parameters)
 
     replacements = {"form": form, "instance": instance}
-    replacements.update(extra_form_parameters)
+    replacements |= extra_form_parameters
     return render(request, template_path, replacements)
 
 
@@ -57,5 +57,5 @@ def delete(request, instance, form_class, next_url, template_path="base/forms/de
 
     replacements = {"form": form, "instance": instance}
     if template_replacements:
-        replacements.update(template_replacements)
+        replacements |= template_replacements
     return render(request, template_path, replacements)

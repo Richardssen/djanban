@@ -62,6 +62,6 @@ class BoardTest(TestCase):
 
         edited_board = edit_board_form.save(commit=True)
         for field, value in form_data.items():
-            if field != "hourly_rates" and field != "header_image":
+            if field not in ["hourly_rates", "header_image"]:
                 self.assertEqual(getattr(edited_board, field), value, "Attribute {0} does not match".format(field))
 

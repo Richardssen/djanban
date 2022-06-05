@@ -401,12 +401,12 @@ def completion_histogram(request, board_id="all", time_metric="lead_time", units
 
     if time_metric is None:
         time_metric = "lead_time"
-    elif time_metric != "lead_time" and time_metric != "cycle_time" and time_metric != "spent_time":
+    elif time_metric not in ["lead_time", "cycle_time", "spent_time"]:
         raise ValueError(u"Time metric {0} not recognized".format(time_metric))
 
     if units is None:
         units = "days"
-    elif units != "days" and units != "hours":
+    elif units not in ["days", "hours"]:
         raise ValueError(u"Units value {0} not recognized".format(units))
 
     return cards.completion_histogram(request.user, board, time_metric, units)
@@ -523,5 +523,4 @@ def view_agility_rating(request, board_id):
 def _get_user_board_or_none(request, board_id=None):
     if board_id is None:
         return None
-    board = get_user_boards(request.user).get(id=board_id)
-    return board
+    return get_user_boards(request.user).get(id=board_id)

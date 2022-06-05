@@ -54,7 +54,7 @@ def _add_card(request, board_id):
     if not put_params.get("name") or not put_params.get("list") or not put_params.get("position"):
         return JsonResponseBadRequest({"message": "Bad request: some parameters are missing."})
 
-    if put_params.get("position") != "top" and put_params.get("position") != "bottom":
+    if put_params.get("position") not in ["top", "bottom"]:
         return JsonResponseBadRequest({"message": "Bad request: some parameters are missing."})
 
     try:
@@ -361,9 +361,8 @@ def add_se_time(request, board_id, card_id):
 
     # Optional days ago parameter
     days_ago = None
-    matches = re.match(r"^\-(?P<days_ago>\d+)$", date)
-    if matches:
-        days_ago = int(matches.group("days_ago"))
+    if matches := re.match(r"^\-(?P<days_ago>\d+)$", date):
+        days_ago = int(matches["days_ago"])
 
     card.add_spent_estimated_time(member, spent_time, estimated_time, days_ago, description)
 
@@ -541,7 +540,7 @@ def remove_requirement(request, board_id, card_id, requirement_id):
 @member_required
 @transaction.atomic
 def modify_comment(request, board_id, card_id, comment_id):
-    if request.method != "DELETE" and request.method != "POST":
+    if request.method not in ["DELETE", "POST"]:
         return JsonResponseMethodNotAllowed({"message": "HTTP method not allowed."})
 
     member = request.user.member
@@ -574,8 +573,7 @@ def modify_comment(request, board_id, card_id, comment_id):
 # Edit comment
 @member_required
 def _edit_comment(member, card, comment_to_edit, new_comment_content):
-    edited_comment = card.edit_comment(member, comment_to_edit, new_comment_content)
-    return edited_comment
+    return card.edit_comment(member, comment_to_edit, new_comment_content)
 
 
 # Delete a comment

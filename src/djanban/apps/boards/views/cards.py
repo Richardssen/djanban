@@ -98,7 +98,7 @@ def _move(request, board_id, card_id, movement_type="forward"):
 
     if movement_type == "forward":
         card.move_forward(member)
-    elif movement_type == "backward" or movement_type == "back":
+    elif movement_type in ["backward", "back"]:
         card.move_backward(member)
     else:
         raise Http404
@@ -213,9 +213,8 @@ def add_spent_estimated_time(request, board_id, card_id):
 
     # Optional days ago parameter
     days_ago = None
-    matches = re.match(r"^\-(?P<days_ago>\d+)$", selected_date)
-    if matches:
-        days_ago = int(matches.group("days_ago"))
+    if matches := re.match(r"^\-(?P<days_ago>\d+)$", selected_date):
+        days_ago = int(matches["days_ago"])
 
     card.add_spent_estimated_time(member, spent_time, estimated_time, days_ago=days_ago, description=description)
     return HttpResponseRedirect(reverse("boards:view_card", args=(board_id, card_id)))
@@ -239,9 +238,7 @@ def view_short_url(request, board_id, card_uuid):
 @login_required
 def view_report(request, board_id):
     try:
-        member = None
-        if user_is_member(request.user):
-            member = request.user.member
+        member = request.user.member if user_is_member(request.user) else None
         board = get_user_boards(request.user).get(id=board_id)
     except Board.DoesNotExist:
         raise Http404
@@ -262,10 +259,7 @@ def view_report(request, board_id):
 @login_required
 def export_report(request, board_id):
 
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
-
+    member = request.user.member if user_is_member(request.user) else None
     board = get_user_board_or_404(request.user, board_id)
     cards = board.cards.all()
 
@@ -314,9 +308,7 @@ def export_detailed_report(request, board_id):
 @login_required
 def view_week_summary(request, board_id, member_id="all", week_of_year=None):
 
-    current_member = None
-    if user_is_member(request.user):
-        current_member = request.user.member
+    current_member = request.user.member if user_is_member(request.user) else None
     board = get_user_board_or_404(request.user, board_id)
 
     replacements = {"board": board, "member": current_member}
@@ -340,20 +332,17 @@ def view_week_summary(request, board_id, member_id="all", week_of_year=None):
         week_of_year = "{0}W{1}".format(year, week)
 
     if week is None or year is None:
-        matches = re.match(r"^(?P<year>\d{4})W(?P<week>\d{2})$", week_of_year)
-        if matches:
-            year = int(matches.group("year"))
-            week = int(matches.group("week"))
+        if matches := re.match(
+            r"^(?P<year>\d{4})W(?P<week>\d{2})$", week_of_year
+        ):
+            year = int(matches["year"])
+            week = int(matches["week"])
 
     form = WeekSummaryFilterForm(initial={"year": year, "week": week, "member": member_id}, board=board)
     replacements["form"] = form
     replacements["week_of_year"] = week_of_year
 
-    # Done cards that are of this member
-    member_filter = {}
-    if member_id != "all":
-        member_filter = {"members": member_id}
-
+    member_filter = {"members": member_id} if member_id != "all" else {}
     # Date limits of the selected week
     week_start_date = Week(year, week).monday()
     week_end_date = Week(year, week).friday()

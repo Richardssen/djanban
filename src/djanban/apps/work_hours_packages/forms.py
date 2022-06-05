@@ -47,8 +47,7 @@ class WorkHoursPackageFilterForm(forms.Form):
         self.fields["is_paid"].choices = [("", "Indiferent"),("Yes", "Yes"),("No", "No")]
 
     def clean(self):
-        cleaned_data = super(WorkHoursPackageFilterForm, self).clean()
-        return cleaned_data
+        return super(WorkHoursPackageFilterForm, self).clean()
 
     def get_work_hours_packages(self):
         # Filtering by multiboard, board or label
@@ -66,7 +65,7 @@ class WorkHoursPackageFilterForm(forms.Form):
             work_hours_packages = work_hours_packages.filter(board__label=label)
 
         # Filtering paid work hours packages
-        if self.cleaned_data.get("is_paid") == "Yes" or self.cleaned_data.get("is_paid") == "No":
+        if self.cleaned_data.get("is_paid") in ["Yes", "No"]:
             work_hours_packages = work_hours_packages.filter(is_paid=(self.cleaned_data.get("is_paid") == "Yes"))
 
         return work_hours_packages
@@ -167,9 +166,13 @@ class WorkHoursPackageForm(forms.ModelForm):
 
     def save(self, commit=True):
         super(WorkHoursPackageForm, self).save(commit=commit)
-        if commit:
-            if not self.instance.members.filter(id=self.instance.creator.id).exists():
-                self.instance.members.add(self.instance.creator)
+        if (
+            commit
+            and not self.instance.members.filter(
+                id=self.instance.creator.id
+            ).exists()
+        ):
+            self.instance.members.add(self.instance.creator)
 
 
 # Sent completion notifications form

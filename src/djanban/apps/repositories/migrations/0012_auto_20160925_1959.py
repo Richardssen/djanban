@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 from django.db import migrations
 
 
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -15,6 +17,14 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterIndexTogether(
             name='phpmdmessage',
-            index_together=set([('commit', 'commit_file', 'ruleset'), ('board', 'repository', 'commit', 'commit_file', 'ruleset'), ('board', 'ruleset'), ('board', 'repository', 'commit', 'ruleset'), ('board', 'commit', 'commit_file', 'ruleset'), ('board', 'repository', 'ruleset', 'commit'), ('board', 'commit', 'ruleset')]),
-        ),
+            index_together={
+                ('commit', 'commit_file', 'ruleset'),
+                ('board', 'repository', 'commit', 'commit_file', 'ruleset'),
+                ('board', 'ruleset'),
+                ('board', 'repository', 'commit', 'ruleset'),
+                ('board', 'commit', 'commit_file', 'ruleset'),
+                ('board', 'repository', 'ruleset', 'commit'),
+                ('board', 'commit', 'ruleset'),
+            },
+        )
     ]

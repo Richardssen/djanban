@@ -13,9 +13,7 @@ from djanban.apps.hourly_rates.models import HourlyRate
 # View list of hourly rates
 @login_required
 def view_list(request):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
+    member = request.user.member if user_is_member(request.user) else None
     hourly_rates = HourlyRate.objects.all()
     replacements = {
         "member": member,
@@ -46,10 +44,7 @@ def new(request):
 # Edit one hourly rate
 @login_required
 def edit(request, hourly_rate_id):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
-
+    member = request.user.member if user_is_member(request.user) else None
     hourly_rate = HourlyRate.objects.get(id=hourly_rate_id)
 
     if request.method == "POST":
@@ -68,10 +63,7 @@ def edit(request, hourly_rate_id):
 # Delete one hourly rate
 @login_required
 def delete(request, hourly_rate_id):
-    member = None
-    if user_is_member(request.user):
-        member = request.user.member
-
+    member = request.user.member if user_is_member(request.user) else None
     hourly_rate = HourlyRate.objects.get(id=hourly_rate_id)
 
     if request.method == "POST":

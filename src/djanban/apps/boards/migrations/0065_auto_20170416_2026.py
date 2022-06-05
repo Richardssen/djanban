@@ -9,7 +9,11 @@ import re
 def set_number_of_words_in_comments(apps, schema):
     Card = apps.get_model("boards", "Card")
     for card in Card.objects.all():
-        card.number_of_words_in_comments = sum([len(re.split(r"\s+", comment.content)) for comment in card.comments.all()])
+        card.number_of_words_in_comments = sum(
+            len(re.split(r"\s+", comment.content))
+            for comment in card.comments.all()
+        )
+
         card.save()
 
 

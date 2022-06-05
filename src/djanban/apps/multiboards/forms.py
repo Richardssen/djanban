@@ -52,9 +52,13 @@ class MultiboardForm(forms.ModelForm):
 
     def save(self, commit=True):
         super(MultiboardForm, self).save(commit=commit)
-        if commit:
-            if not self.instance.members.filter(id=self.instance.creator.id).exists():
-                self.instance.members.add(self.instance.creator)
+        if (
+            commit
+            and not self.instance.members.filter(
+                id=self.instance.creator.id
+            ).exists()
+        ):
+            self.instance.members.add(self.instance.creator)
 
 
 # Delete multiboard form

@@ -11,8 +11,7 @@ def adjust_spent_time(member, spent_time, date):
         if (spent_time_factor.start_date is None and spent_time_factor.end_date is None) or \
                 (spent_time_factor.start_date <= date and spent_time_factor.end_date is None) or \
                 (spent_time_factor.start_date <= date <= spent_time_factor.end_date):
-            adjusted_value = spent_time * spent_time_factor.factor
-            return adjusted_value
+            return spent_time * spent_time_factor.factor
     return spent_time
 
 
